@@ -1,0 +1,2326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#002f34">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Bading Chiwalani">
+    <!-- Updated Icon URL -->
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/mrbtool/badingchiwalani/main/badingchiwalani.png">
+    <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/mrbtool/badingchiwalani/main/badingchiwalani.png">
+
+    <title>Bading Chiwalani</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        /* --- RESET & BASIC STYLES --- */
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Roboto', sans-serif; -webkit-tap-highlight-color: transparent; }
+        
+        html { height: 100%; }
+        body { 
+            background-color: #f2f4f5; 
+            height: 100%; 
+            overflow: hidden; 
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* --- UTILITIES --- */
+        .hidden { display: none !important; }
+
+        /* --- INTERSTITIAL AD (FULL SCREEN) --- */
+        #interstitial-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.9); z-index: 20000;
+            display: none; flex-direction: column; justify-content: center; align-items: center;
+        }
+        .ad-content-wrapper { position: relative; width: 90%; max-width: 400px; max-height: 80vh; }
+        .ad-full-img { width: 100%; height: auto; border-radius: 8px; cursor: pointer; display: block; object-fit: contain; max-height: 70vh; }
+        .ad-close-btn {
+            position: absolute; top: -50px; right: 0;
+            background: white; color: #333; font-weight: bold;
+            width: 40px; height: 40px; border-radius: 50%;
+            display: flex; justify-content: center; align-items: center;
+            cursor: pointer; opacity: 0.5; pointer-events: none; transition: 0.3s;
+            font-size: 1.2rem;
+        }
+        .ad-close-btn.active { opacity: 1; pointer-events: auto; background: #ff3a3a; color: white; }
+        .ad-timer-badge {
+            position: absolute; top: 10px; left: 10px;
+            background: rgba(0,0,0,0.6); color: white;
+            padding: 5px 10px; border-radius: 4px; font-size: 0.8rem;
+        }
+
+        /* --- DRAWER (SIDEBAR) --- */
+        .drawer-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5); z-index: 15000;
+            opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
+        }
+        .drawer-overlay.open { opacity: 1; pointer-events: auto; }
+        
+        .drawer-content {
+            position: fixed; top: 0; left: 0; width: 80%; max-width: 300px; height: 100%;
+            background: white; z-index: 15001;
+            transform: translateX(-100%); transition: transform 0.3s ease;
+            display: flex; flex-direction: column;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+        }
+        .drawer-content.open { transform: translateX(0); }
+        
+        .drawer-header {
+            background: #002f34; color: white; padding: 25px 20px;
+            display: flex; flex-direction: column;
+        }
+        .drawer-header h2 { font-size: 1.4rem; margin-bottom: 5px; }
+        .drawer-header p { font-size: 0.9rem; opacity: 0.8; }
+        
+        .drawer-menu { flex: 1; overflow-y: auto; padding: 10px 0; }
+        .drawer-item {
+            padding: 15px 20px; display: flex; align-items: center;
+            color: #002f34; font-size: 1rem; cursor: pointer;
+            border-bottom: 1px solid #f2f4f5; transition: background 0.2s;
+        }
+        .drawer-item:active { background: #f0f8ff; }
+        .drawer-item i { width: 30px; color: #3a77ff; text-align: center; margin-right: 10px; }
+        .drawer-footer { padding: 15px; border-top: 1px solid #ddd; text-align: center; color: #7f9799; font-size: 0.8rem; }
+
+        /* --- BOOST MODAL --- */
+        .boost-modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6); z-index: 12000;
+            display: none; justify-content: center; align-items: flex-end;
+        }
+        .boost-modal {
+            background: white; width: 100%; max-width: 500px;
+            border-top-left-radius: 15px; border-top-right-radius: 15px;
+            padding: 20px; animation: slideUp 0.3s ease; max-height: 90vh; overflow-y: auto;
+        }
+        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        .boost-header { font-size: 1.2rem; font-weight: bold; color: #002f34; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; }
+        .boost-option {
+            border: 1px solid #ddd; padding: 15px; border-radius: 8px;
+            margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; cursor: pointer;
+        }
+        .boost-option.selected { border: 2px solid #002f34; background: #f0f8ff; }
+        .boost-price { font-weight: bold; color: #002f34; }
+        .qr-display { text-align: center; margin: 20px 0; }
+        .qr-display img { width: 150px; height: 150px; object-fit: contain; border: 1px solid #eee; }
+
+        /* --- BOOST RESULT / CELEBRATION OVERLAY --- */
+        #boost-result-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85); z-index: 13000;
+            display: none; justify-content: center; align-items: center;
+            animation: fadeIn 0.3s ease;
+        }
+        .result-card {
+            background: white; width: 85%; max-width: 350px;
+            padding: 30px 20px; border-radius: 12px;
+            text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+            display: flex; flex-direction: column; align-items: center;
+            transform: scale(0.9); animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+        @keyframes popIn { to { transform: scale(1); } }
+        .result-icon {
+            width: 80px; height: 80px; border-radius: 50%;
+            display: flex; justify-content: center; align-items: center;
+            font-size: 2.5rem; margin-bottom: 20px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+        .res-success .result-icon { background: #e2ffc7; color: #2ecc71; }
+        .res-error .result-icon { background: #ffe2e2; color: #ff3a3a; }
+        .result-title { font-size: 1.4rem; font-weight: 900; color: #002f34; margin-bottom: 10px; }
+        .result-msg { color: #555; font-size: 0.95rem; line-height: 1.5; margin-bottom: 25px; }
+        .btn-result { width: 100%; padding: 12px; border-radius: 25px; border: none; font-weight: bold; cursor: pointer; font-size: 1rem; transition: transform 0.2s; }
+        .btn-result:active { transform: scale(0.95); }
+        .btn-res-ok { background: #002f34; color: white; }
+
+        /* --- OFFLINE TOAST --- */
+        #offline-toast {
+            position: fixed; top: -50px; left: 0; width: 100%;
+            background-color: #333; color: white;
+            text-align: center; padding: 10px; font-size: 0.85rem;
+            z-index: 10001; transition: top 0.3s ease;
+            display: flex; justify-content: center; align-items: center; gap: 8px;
+        }
+        #offline-toast.show { top: 0; }
+        
+        /* --- CUSTOM ALERT MODAL --- */
+        #custom-alert-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5); z-index: 11000;
+            display: none; justify-content: center; align-items: center;
+        }
+        .custom-alert-box {
+            background: white; width: 85%; max-width: 320px;
+            padding: 20px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            text-align: center;
+        }
+        .alert-title { font-weight: bold; font-size: 1.1rem; color: #002f34; margin-bottom: 10px; }
+        .alert-msg { font-size: 0.95rem; color: #555; margin-bottom: 20px; line-height: 1.4; }
+        .alert-actions { display: flex; gap: 10px; justify-content: center; }
+        .alert-btn {
+            flex: 1; padding: 10px; border: none; border-radius: 4px;
+            font-weight: bold; cursor: pointer; font-size: 0.9rem;
+        }
+        .btn-alert-ok { background: #002f34; color: white; }
+        .btn-alert-cancel { background: #e0e0e0; color: #333; }
+
+        /* --- LOADING / SPLASH SCREEN --- */
+        #loading-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #fff; z-index: 10000; display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+        }
+        .loading-logo { font-size: 2rem; font-weight: 900; color: #002f34; margin-bottom: 30px; }
+        .progress-container {
+            width: 80%; max-width: 300px; height: 6px; background: #e0e0e0;
+            border-radius: 3px; overflow: hidden; position: relative;
+        }
+        .progress-bar-fill {
+            height: 100%; width: 0%; background: #002f34;
+            transition: width 0.4s ease;
+        }
+        .loading-text { margin-top: 15px; color: #7f9799; font-size: 0.9rem; }
+
+        /* --- AUTH SCREEN --- */
+        #auth-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #fff; z-index: 9999; display: none;
+            flex-direction: column; padding: 30px; overflow-y: auto;
+        }
+        .auth-logo { font-size: 3rem; font-weight: 900; color: #002f34; margin-bottom: 30px; text-align: center; margin-top: 50px; }
+        .auth-input { width: 100%; padding: 15px; border: 2px solid #002f34; margin-bottom: 15px; border-radius: 4px; font-size: 1rem; }
+        .auth-btn { width: 100%; padding: 15px; background: #002f34; color: white; font-weight: bold; border: none; border-radius: 4px; cursor: pointer; font-size: 1rem; margin-bottom: 10px; }
+        .auth-google { background: #fff; color: #444; border: 1px solid #ccc; display: flex; align-items: center; justify-content: center; gap: 10px; }
+        .auth-link { text-align: center; margin-top: 20px; color: #002f34; cursor: pointer; text-decoration: underline; }
+        .auth-error { color: red; text-align: center; margin-bottom: 10px; display: none; }
+
+        /* --- HEADER & LOCATION --- */
+        .app-header {
+            background-color: #ffffff;
+            padding: 15px;
+            flex-shrink: 0;
+            z-index: 100;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            display: flex; justify-content: flex-start; align-items: center;
+            gap: 15px;
+        }
+        .header-drawer-btn { font-size: 1.4rem; color: #002f34; cursor: pointer; }
+        .logo { font-weight: 900; font-size: 1.5rem; color: #002f34; }
+        
+        .location-container {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: #002f34;
+            font-size: 0.9rem;
+            font-weight: 500;
+            overflow: hidden;
+            white-space: nowrap;
+        }
+        .location-text { text-overflow: ellipsis; overflow: hidden; }
+        
+        /* DOWNLOAD BTN */
+        .btn-install-app {
+            background: #002f34; color: white;
+            border: none; padding: 6px 12px;
+            border-radius: 20px; font-size: 0.75rem;
+            font-weight: bold; cursor: pointer;
+            display: none; /* Hidden by default */
+            align-items: center; gap: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            white-space: nowrap;
+        }
+
+        /* --- SEARCH & CATEGORIES --- */
+        .search-container { padding: 10px 15px; background: white; border-bottom: 1px solid #f2f4f5; flex-shrink: 0; }
+        .search-box { width: 100%; padding: 10px; border: 2px solid #002f34; border-radius: 4px; outline: none; }
+        .categories-container {
+            background: white; padding: 15px 10px; display: flex; overflow-x: auto; gap: 20px;
+            scrollbar-width: none; border-bottom: 1px solid #ddd; margin-bottom: 5px; flex-shrink: 0;
+        }
+        .categories-container::-webkit-scrollbar { display: none; }
+        .cat-item { display: flex; flex-direction: column; align-items: center; min-width: 60px; cursor: pointer; }
+        .cat-icon {
+            width: 45px; height: 45px; border-radius: 50%; background-color: #f2f4f5;
+            display: flex; justify-content: center; align-items: center; margin-bottom: 5px;
+            color: #002f34; font-size: 1.2rem; transition: 0.2s;
+        }
+        .cat-item:active .cat-icon { background-color: #c8f8f6; }
+        .cat-name { font-size: 0.75rem; color: #002f34; font-weight: 500; white-space: nowrap; }
+
+        /* --- SCREENS (SCROLLING FIXED) --- */
+        .screen { 
+            display: none; 
+            flex-grow: 1; 
+            overflow-y: auto; 
+            -webkit-overflow-scrolling: touch; 
+            padding-bottom: 120px; 
+            scroll-behavior: smooth;
+        }
+        .screen.active { display: block; animation: fadeIn 0.3s ease; }
+        
+        #screen-chat-conversation {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100vh; height: 100dvh;
+            z-index: 2000; background: #efe7dd; padding-bottom: 0; display: none; 
+        }
+        #screen-chat-conversation.active { display: block; }
+
+        .category-header {
+            background: white; padding: 15px; display: flex; align-items: center;
+            font-size: 1.2rem; color: #002f34; font-weight: bold;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 10px;
+            position: sticky; top: 0; z-index: 50;
+        }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        /* --- 2. PRODUCT GRID & DISCOUNT BADGE --- */
+        .section-title { font-size: 1.2rem; color: #002f34; margin: 10px 0 15px 10px; }
+        
+        .product-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            padding: 10px;
+        }
+
+        .card {
+            background: white; border-radius: 4px; overflow: hidden;
+            border: 1px solid #ebeeef; display: flex; flex-direction: column;
+            position: relative; cursor: pointer;
+        }
+
+        .featured-tag {
+            position: absolute; top: 5px; left: 5px; font-size: 0.6rem;
+            padding: 2px 5px; border-radius: 2px; font-weight: bold; z-index: 10;
+            background: #ffce32; color: #002f34;
+        }
+        
+        /* NEW: DISCOUNT BADGE */
+        .discount-badge {
+            position: absolute; top: 5px; left: 5px; font-size: 0.6rem;
+            padding: 2px 6px; border-radius: 2px; font-weight: bold; z-index: 11;
+            background: #ff3a3a; color: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        /* Adjust fresh/featured tag if discount exists */
+        .card.has-discount .featured-tag, 
+        .card.has-discount .new-tag {
+            top: 25px; 
+        }
+
+        .new-tag {
+            position: absolute; top: 5px; left: 5px; font-size: 0.6rem;
+            padding: 2px 5px; border-radius: 2px; font-weight: bold; z-index: 10;
+            background: #23e5db; color: #002f34;
+        }
+        
+        .card-img-container { 
+            height: 150px; 
+            width: 100%;
+            background-color: #ddd; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            overflow: hidden; 
+        }
+        .card-img-container img { width: 100%; height: 100%; object-fit: cover; }
+        
+        .card-details { padding: 10px; }
+        .price { font-size: 1.1rem; font-weight: 700; color: #002f34; margin-bottom: 5px; }
+        .original-price { font-size: 0.85rem; text-decoration: line-through; color: #999; margin-left: 5px; font-weight: normal; }
+        .title { font-size: 0.9rem; color: #406367; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 5px; }
+        .meta { font-size: 0.7rem; color: #7f9799; display: flex; justify-content: space-between; margin-top: 5px; }
+
+        .my-ad-actions { display: flex; border-top: 1px solid #ebeeef; }
+        .my-ad-btn { flex: 1; padding: 10px; text-align: center; font-size: 0.8rem; font-weight: bold; cursor: pointer; display: flex; justify-content: center; align-items: center; gap:5px; }
+        .btn-boost { background: #ffce32; color: #002f34; border-right: 1px solid #ebeeef; }
+        .btn-edit { background: #fff; color: #002f34; border-right: 1px solid #ebeeef; }
+        .btn-delete { background: #fff; color: #ff3a3a; }
+
+        /* --- PROFESSIONAL NOTIFICATIONS DESIGN --- */
+        .notif-list { padding: 15px; background: #f8f9fa; }
+        
+        .notif-card {
+            background: white;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            display: flex;
+            align-items: flex-start;
+            gap: 15px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            border-left: 4px solid transparent;
+        }
+        .notif-card.clicked { opacity: 0.7; }
+        .notif-card:active { transform: scale(0.98); }
+        .notif-card.type-ad { border-left-color: #3a77ff; }
+        .notif-card.type-boost { border-left-color: #ffce32; }
+        
+        .notif-icon-box {
+            width: 45px; height: 45px;
+            border-radius: 12px;
+            background: #f0f4f8;
+            color: #002f34;
+            display: flex; justify-content: center; align-items: center;
+            font-size: 1.2rem;
+            flex-shrink: 0;
+        }
+        .type-ad .notif-icon-box { background: #e3f2fd; color: #1976d2; }
+        .type-boost .notif-icon-box { background: #fff8e1; color: #fbc02d; }
+        
+        .notif-content-wrapper { flex: 1; }
+        .notif-header-row { display: flex; justify-content: space-between; margin-bottom: 5px; }
+        .notif-title-pro { font-weight: 700; font-size: 1rem; color: #333; }
+        .notif-time-pro { font-size: 0.75rem; color: #999; font-weight: 500; }
+        
+        .notif-body-pro { font-size: 0.9rem; color: #555; line-height: 1.4; margin-bottom: 8px; }
+        .notif-action-hint { font-size: 0.75rem; color: #3a77ff; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; }
+
+
+        /* --- FORMS (SELL SCREEN) --- */
+        .sell-container { background: white; padding: 20px; min-height: 100%; padding-bottom: 100px; }
+        .form-header { font-size: 1.5rem; font-weight: 700; color: #002f34; margin-bottom: 20px; text-align: center; }
+        .form-group { margin-bottom: 20px; }
+        .form-label { display: block; font-size: 0.9rem; color: #002f34; margin-bottom: 8px; font-weight: 500; }
+        .form-control { width: 100%; padding: 12px; border: 1px solid #002f34; border-radius: 4px; font-size: 1rem; outline: none; background: #fff; }
+        .form-control:focus { border: 2px solid #002f34; }
+        textarea.form-control { resize: none; height: 100px; }
+        .image-upload-area { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 10px; }
+        .upload-box { border: 2px dashed #002f34; border-radius: 4px; height: 80px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #002f34; background: #f9f9f9; }
+        .preview-box { border: 1px solid #ddd; border-radius: 4px; height: 80px; position: relative; overflow: hidden; }
+        .preview-box img { width: 100%; height: 100%; object-fit: cover; }
+        .remove-img { position: absolute; top: 2px; right: 2px; background: rgba(0,0,0,0.6); color: white; border-radius: 50%; width: 20px; height: 20px; font-size: 12px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+        .btn-submit { width: 100%; padding: 15px; background-color: #002f34; color: white; font-size: 1.1rem; font-weight: bold; border: none; border-radius: 4px; cursor: pointer; margin-top: 10px; margin-bottom: 20px; }
+        .btn-submit:disabled { background-color: #7f9799; }
+        
+        #dynamic-fields-container { border-top: 1px dashed #ccc; border-bottom: 1px dashed #ccc; padding: 15px 0; margin-bottom: 20px; display: none; }
+        #dynamic-fields-container h4 { margin-bottom: 15px; color: #3a77ff; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px; }
+
+        /* --- DETAILS SCREEN --- */
+        #screen-details { background: white; z-index: 200; padding-bottom: 80px; position: fixed; top: 0; left: 0; width: 100%; height: 100%; overflow-y: auto; }
+        .details-header { position: absolute; top: 0; left: 0; width: 100%; padding: 15px; display: flex; justify-content: space-between; z-index: 10; background: linear-gradient(rgba(0,0,0,0.5), transparent); }
+        .details-header i { color: white; font-size: 1.4rem; cursor: pointer; text-shadow: 0 1px 3px rgba(0,0,0,0.5); margin-left: 15px; }
+        
+        .image-slider { width: 100%; height: 300px; background: #000; display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; position: relative; }
+        .slider-item { min-width: 100%; height: 100%; scroll-snap-align: center; display: flex; align-items: center; justify-content: center; }
+        .slider-item img { width: 100%; height: 100%; object-fit: contain; }
+        .slider-counter { position: absolute; bottom: 15px; right: 15px; background: rgba(0,0,0,0.6); color: white; padding: 2px 8px; font-size: 0.8rem; border-radius: 4px; }
+        .details-content { padding: 15px; }
+        .dt-price { font-size: 1.5rem; font-weight: 900; color: #002f34; margin-bottom: 5px; }
+        .dt-title { font-size: 1.1rem; color: #002f34; line-height: 1.4; margin-bottom: 10px; }
+        .dt-meta { font-size: 0.8rem; color: #7f9799; display: flex; justify-content: space-between; border-bottom: 1px solid #ebeeef; padding-bottom: 15px; margin-bottom: 15px; }
+        .dt-section-title { font-size: 1.1rem; font-weight: 700; color: #002f34; margin-bottom: 10px; }
+        .dt-description { font-size: 0.95rem; color: #002f34; line-height: 1.5; margin-bottom: 20px; white-space: pre-wrap; }
+        .feature-chip { display: inline-block; background: #e0f7fa; color: #006064; padding: 6px 12px; border-radius: 20px; font-size: 0.8rem; margin: 0 5px 5px 0; border: 1px solid #b2ebf2; }
+        .seller-profile { display: flex; align-items: center; padding: 15px 0; border-top: 1px solid #ebeeef; border-bottom: 1px solid #ebeeef; margin-bottom: 15px; cursor: pointer; transition: 0.2s; }
+        .seller-profile:active { background: #f9f9f9; }
+        .seller-img { width: 60px; height: 60px; border-radius: 50%; background: #ddd; margin-right: 15px; object-fit: cover; }
+        .seller-name { font-weight: bold; font-size: 1.1rem; color: #002f34; margin-bottom: 3px; }
+        .seller-detail-row { font-size: 0.95rem; color: #406367; display: flex; align-items: center; margin-bottom: 4px; font-weight: 500; }
+        .action-bar { position: fixed; bottom: 0; left: 0; width: 100%; background: white; padding: 10px 15px; box-shadow: 0 -2px 5px rgba(0,0,0,0.1); display: flex; gap: 15px; z-index: 201; }
+        .btn-chat { flex: 1; padding: 12px; border: 2px solid #002f34; background: white; color: #002f34; font-weight: bold; border-radius: 4px; cursor: pointer; }
+        .btn-offer { flex: 1; padding: 12px; background: #002f34; color: white; font-weight: bold; border: none; border-radius: 4px; cursor: pointer; }
+
+        /* SAFETY BOX STYLE */
+        .safety-box { background: #fff3cd; border: 1px solid #ffeeba; color: #856404; padding: 15px; margin: 20px 0; border-radius: 8px; font-size: 0.85rem; }
+        .safety-box b { display: block; margin-bottom: 5px; font-size: 0.9rem; }
+        .safety-box ul { margin: 0; padding-left: 20px; }
+        
+        /* AD CONTAINER BOTTOM STYLE */
+        .ad-container-bottom { margin-bottom: 80px; text-align: center; min-height: 50px; background: #f9f9f9; display: flex; justify-content: center; align-items: center; }
+
+        /* --- PROFESSIONAL PROFILE REDESIGN --- */
+        .prof-hero {
+            background: linear-gradient(135deg, #002f34, #00464d);
+            padding: 30px 20px;
+            color: white;
+            text-align: center;
+            border-bottom-left-radius: 20px;
+            border-bottom-right-radius: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .prof-pic-large {
+            width: 100px; height: 100px; border-radius: 50%;
+            border: 4px solid rgba(255,255,255,0.3);
+            object-fit: cover; background: #fff; margin-bottom: 10px;
+        }
+        .prof-name { font-size: 1.4rem; font-weight: 700; margin-bottom: 5px; }
+        .prof-detail { font-size: 0.9rem; opacity: 0.8; margin-bottom: 2px; }
+        
+        .prof-stats-container {
+            display: flex; justify-content: space-around;
+            background: white; margin: -30px 20px 20px 20px;
+            padding: 15px; border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .prof-stat-box { text-align: center; flex: 1; border-right: 1px solid #eee; }
+        .prof-stat-box:last-child { border-right: none; }
+        .prof-stat-num { font-size: 1.2rem; font-weight: 900; color: #002f34; }
+        .prof-stat-label { font-size: 0.75rem; color: #777; text-transform: uppercase; }
+
+        .prof-menu-card { background: white; border-radius: 8px; overflow: hidden; margin: 0 20px 20px 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        .prof-menu-item {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 18px 20px; border-bottom: 1px solid #f2f4f5; cursor: pointer; color: #333;
+        }
+        .prof-menu-item:last-child { border-bottom: none; }
+        .prof-menu-item:active { background: #f9f9f9; }
+        .prof-menu-left { display: flex; align-items: center; gap: 15px; font-weight: 500; }
+        .prof-menu-icon { color: #002f34; font-size: 1.1rem; width: 25px; text-align: center; }
+        
+        .logout-btn { color: #ff3a3a; font-weight: bold; text-align: center; margin: 20px; padding: 15px; background: white; border-radius: 8px; cursor: pointer; border: 1px solid #ff3a3a; }
+        
+        .edit-profile-img-container { display: flex; justify-content: center; margin-bottom: 20px; position: relative; }
+        .edit-profile-pic { width: 100px; height: 100px; border-radius: 50%; object-fit: cover; border: 3px solid #002f34; }
+        .edit-icon-overlay { position: absolute; bottom: 0; right: 35%; background: #002f34; color: white; width: 30px; height: 30px; border-radius: 50%; display: flex; justify-content: center; align-items: center; border: 2px solid white; }
+
+        /* --- BOTTOM NAV --- */
+        .bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; height: 60px; background-color: #ffffff; display: flex; justify-content: space-around; align-items: center; border-top: 1px solid #e0e0e0; z-index: 1000; flex-shrink: 0; }
+        .nav-item { text-decoration: none; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #002f34; font-size: 0.75rem; width: 20%; cursor: pointer; position: relative; }
+        .nav-item i { font-size: 1.3rem; margin-bottom: 4px; color: #002f34; }
+        .nav-item.active i, .nav-item.active span { color: #3a77ff; font-weight: bold; }
+        .sell-btn-wrapper { position: relative; top: -15px; }
+        .sell-circle { background: linear-gradient(to bottom right, #3a77ff, #002f34); width: 50px; height: 50px; border-radius: 50%; display: flex; justify-content: center; align-items: center; color: white; border: 4px solid #fff; box-shadow: 0 -2px 5px rgba(0,0,0,0.1); }
+        .nav-badge { position: absolute; top: 2px; right: 20%; background-color: #ff3a3a; color: white; font-size: 0.6rem; font-weight: bold; padding: 2px 5px; border-radius: 50%; display: none; }
+
+        .placeholder-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 60vh; color: #7f9799; text-align: center; padding: 20px; }
+        .placeholder-screen i { font-size: 4rem; margin-bottom: 20px; color: #002f34; }
+
+        /* --- CHAT STYLES --- */
+        .chat-list { background: white; padding-bottom: 80px; }
+        .chat-item { display: flex; align-items: center; padding: 15px; border-bottom: 1px solid #f2f4f5; cursor: pointer; transition: background 0.2s; }
+        .chat-item.unread { background-color: #f0f8ff; }
+        .chat-item.unread .chat-item-name, .chat-item.unread .chat-item-msg { font-weight: 900; color: #002f34; }
+        .chat-item-img { width: 50px; height: 50px; border-radius: 4px; object-fit: cover; margin-right: 15px; background: #ddd; }
+        .chat-item-info { flex: 1; overflow: hidden; }
+        .chat-item-name { font-weight: bold; color: #002f34; font-size: 1rem; margin-bottom: 3px; }
+        .chat-item-ad { font-size: 0.8rem; color: #3a77ff; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .chat-item-msg { font-size: 0.85rem; color: #7f9799; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .chat-time { font-size: 0.7rem; color: #ccc; margin-left: 10px; font-weight: normal; float: right; }
+        .chat-list-badge { background: #ff3a3a; color: white; font-size: 0.7rem; font-weight: bold; min-width: 20px; height: 20px; border-radius: 50%; display: flex; justify-content: center; align-items: center; margin-left: 10px; }
+
+        /* Conversation Screen */
+        .chat-window { display: flex; flex-direction: column; height: 100%; background: #efe7dd; }
+        .chat-header { flex-shrink: 0; background: #002f34; color: white; padding: 10px 15px; display: flex; align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,0.2); height: 50px; }
+        .chat-header i { display:none; margin-right: 15px; }
+        .chat-header-info { display: flex; flex-direction: column; }
+        .chat-header-title { font-weight: bold; font-size: 1rem; }
+        .chat-header-sub { font-size: 0.75rem; color: #ccc; }
+        .chat-messages { flex-grow: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 10px; padding-bottom: 15px; }
+        .message-bubble { max-width: 80%; padding: 10px 14px; border-radius: 8px; font-size: 0.95rem; line-height: 1.4; position: relative; word-wrap: break-word; }
+        .message-bubble.sent { align-self: flex-end; background: #e2ffc7; color: #303030; border-top-right-radius: 0; box-shadow: 0 1px 1px rgba(0,0,0,0.1); }
+        .message-bubble.received { align-self: flex-start; background: #ffffff; color: #303030; border-top-left-radius: 0; box-shadow: 0 1px 1px rgba(0,0,0,0.1); }
+        .msg-time { font-size: 0.65rem; color: #999; text-align: right; margin-top: 4px; display: block; }
+        .chat-input-area { flex-shrink: 0; background: #f0f0f0; padding: 10px; padding-bottom: max(10px, env(safe-area-inset-bottom)); display: flex; align-items: center; gap: 10px; box-shadow: 0 -1px 3px rgba(0,0,0,0.1); }
+        .chat-input { flex: 1; padding: 12px; border-radius: 25px; border: none; outline: none; font-size: 1rem; background: white; }
+        .chat-send-btn { width: 45px; height: 45px; border-radius: 50%; background: #002f34; color: white; border: none; display: flex; justify-content: center; align-items: center; cursor: pointer; font-size: 1.2rem; }
+
+        /* --- CUSTOM DRAWER PAGE CONTENT STYLE --- */
+        .drawer-text-content {
+            white-space: pre-wrap; /* Preserves newlines and spacing */
+            line-height: 1.6;
+            color: #333;
+            font-size: 0.95rem;
+        }
+
+    </style>
+    
+    <!-- 2. AD SCRIPT -->
+    <script async="async" data-cfasync="false" src="https://summonteacherjunction.com/91e471e76cd27ae162946760c03872a2/invoke.js"></script>
+    
+    <!-- MANIFEST GENERATION -->
+    <script>
+        // Generate Manifest for Install Capability
+        const manifest = {
+            "name": "Bading Chiwalani",
+            "short_name": "Bading",
+            "start_url": ".",
+            "display": "standalone",
+            "background_color": "#f2f4f5",
+            "theme_color": "#002f34",
+            "icons": [
+                {
+                    "src": "https://raw.githubusercontent.com/mrbtool/badingchiwalani/main/badingchiwalani.png",
+                    "sizes": "192x192",
+                    "type": "image/png"
+                },
+                {
+                    "src": "https://raw.githubusercontent.com/mrbtool/badingchiwalani/main/badingchiwalani.png",
+                    "sizes": "512x512",
+                    "type": "image/png"
+                }
+            ]
+        };
+        const stringManifest = JSON.stringify(manifest);
+        const blob = new Blob([stringManifest], {type: 'application/json'});
+        const manifestURL = URL.createObjectURL(blob);
+        const link = document.createElement('link');
+        link.rel = 'manifest';
+        link.href = manifestURL;
+        document.head.appendChild(link);
+    </script>
+</head>
+<body>
+
+    <!-- OFFLINE TOAST -->
+    <div id="offline-toast"><i class="fas fa-wifi"></i> No Internet Connection. Showing offline data.</div>
+
+    <!-- DRAWER OVERLAY -->
+    <div class="drawer-overlay" id="drawer-overlay" onclick="toggleDrawer(false)"></div>
+    <div class="drawer-content" id="drawer-content">
+        <div class="drawer-header">
+            <h2 id="drawer-name">User</h2>
+            <p id="drawer-email">user@email.com</p>
+        </div>
+        <div class="drawer-menu" id="drawer-dynamic-menu">
+            <!-- Dynamic items from Admin Panel -->
+            <div style="padding:20px; color:#777;">Loading options...</div>
+        </div>
+        <div class="drawer-footer">
+            Version 1.8.0
+        </div>
+    </div>
+
+    <!-- 1. AUTO ADS (INTERSTITIAL) OVERLAY -->
+    <div id="interstitial-overlay">
+        <div class="ad-content-wrapper">
+            <div class="ad-timer-badge">Closing in <span id="ad-countdown">5</span>s</div>
+            <div class="ad-close-btn" id="ad-close-btn" onclick="closeInterstitial()"><i class="fas fa-times"></i></div>
+            <img id="ad-full-img" class="ad-full-img" src="" onclick="handleAdClick()">
+        </div>
+    </div>
+
+    <!-- CUSTOM ALERT MODAL -->
+    <div id="custom-alert-overlay">
+        <div class="custom-alert-box">
+            <div class="alert-title" id="alert-title">Alert</div>
+            <div class="alert-msg" id="alert-msg">Message goes here.</div>
+            <div class="alert-actions">
+                <button class="alert-btn btn-alert-cancel" id="alert-cancel" style="display:none;" onclick="closeCustomAlert(false)">Cancel</button>
+                <button class="alert-btn btn-alert-ok" id="alert-ok" onclick="closeCustomAlert(true)">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- BOOST RESULT OVERLAY (CONGRATULATIONS) -->
+    <div id="boost-result-overlay">
+        <div class="result-card" id="res-card">
+            <div class="result-icon"><i class="fas fa-rocket"></i></div>
+            <div class="result-title">Congratulations!</div>
+            <div class="result-msg">Your boost request has been approved. Your ad is now featured!</div>
+            <button class="btn-result btn-res-ok" onclick="document.getElementById('boost-result-overlay').style.display='none'">Awesome!</button>
+        </div>
+    </div>
+
+    <!-- 4. BOOST MODAL (DYNAMIC) -->
+    <div class="boost-modal-overlay" id="boost-overlay">
+        <div class="boost-modal">
+            <div class="boost-header"><span>Boost Your Ad</span> <i class="fas fa-times" onclick="closeBoostModal()"></i></div>
+            <p style="color:#666; font-size:0.9rem; margin-bottom:15px;">Get more views and sell faster! Select a plan:</p>
+            <div id="boost-options-container">
+                <div style="padding:20px; text-align:center;">Loading packages...</div>
+            </div>
+            <div id="boost-payment-section" style="display:none; border-top:1px solid #eee; margin-top:20px; padding-top:10px;">
+                <p style="text-align:center; font-weight:bold; color:#002f34;">Scan & Pay <span id="pay-amount"></span></p>
+                <div class="qr-display"><img id="payment-qr" src="" alt="Loading QR..."></div>
+                <div class="form-group">
+                    <label class="form-label">Upload Payment Screenshot</label>
+                    <input type="file" id="payment-proof" class="form-control" accept="image/*" onchange="handleBoostPaymentUpload(event)">
+                </div>
+                <button class="btn-submit" id="btn-submit-boost" onclick="submitBoostRequest()">Submit Request</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- LOADING / SPLASH OVERLAY -->
+    <div id="loading-overlay">
+        <div class="loading-logo">Bading chiwalani</div>
+        <div class="progress-container">
+            <div class="progress-bar-fill" id="progress-bar-fill"></div>
+        </div>
+        <div class="loading-text" id="loading-status">Starting up...</div>
+    </div>
+
+    <!-- AUTH OVERLAY -->
+    <div id="auth-overlay">
+        <div class="auth-logo">OLX</div>
+        <div id="view-login">
+            <div class="auth-error" id="login-error"></div>
+            <input type="email" id="login-email" class="auth-input" placeholder="Email">
+            <input type="password" id="login-password" class="auth-input" placeholder="Password">
+            <button class="auth-btn" onclick="appLogin()">Log In</button>
+            <div style="text-align: right; margin-bottom: 20px;" onclick="showForgot()"><span style="color:#002f34; font-size: 0.9rem;">Forgot Password?</span></div>
+            <button class="auth-btn auth-google" onclick="appGoogleLogin()"><i class="fab fa-google"></i> Continue with Google</button>
+            <div class="auth-link" onclick="switchAuth('signup')">New user? Create an account</div>
+        </div>
+        <div id="view-signup" class="hidden">
+            <h2 style="text-align:center; color:#002f34; margin-bottom:20px;">Sign Up</h2>
+            <div class="auth-error" id="signup-error"></div>
+            <input type="text" id="signup-name" class="auth-input" placeholder="Full Name">
+            <input type="email" id="signup-email" class="auth-input" placeholder="Email">
+            <input type="password" id="signup-password" class="auth-input" placeholder="Password (Min 6 chars)">
+            <button class="auth-btn" onclick="appSignup()">Create Account</button>
+            <div class="auth-link" onclick="switchAuth('login')">Already have an account? Log In</div>
+        </div>
+        <div id="view-forgot" class="hidden">
+            <h2 style="text-align:center; color:#002f34; margin-bottom:20px;">Reset Password</h2>
+            <div class="auth-error" id="forgot-error"></div>
+            <input type="email" id="forgot-email" class="auth-input" placeholder="Enter your email">
+            <button class="auth-btn" onclick="appForgot()">Send Reset Link</button>
+            <div class="auth-link" onclick="switchAuth('login')">Back to Login</div>
+        </div>
+    </div>
+
+    <!-- MAIN APP WRAPPER -->
+    <div id="app-wrapper" style="display:none; height: 100%; display: flex; flex-direction: column;">
+
+        <!-- Header -->
+        <div class="app-header" id="main-header">
+            <i class="fas fa-bars header-drawer-btn" onclick="toggleDrawer(true)"></i>
+            <div class="logo">OLX</div>
+            
+            <!-- LOCATION DISPLAY (Static, based on profile) -->
+            <div class="location-container">
+                <i class="fas fa-map-marker-alt" style="margin-right:4px;"></i>
+                <div class="location-text" id="header-location-text">Meghalaya</div>
+            </div>
+            
+            <!-- DOWNLOAD APP BUTTON -->
+            <button id="install-btn" class="btn-install-app">
+                <i class="fas fa-download"></i> Get App
+            </button>
+        </div>
+
+        <!-- Search -->
+        <div class="search-container" id="main-search">
+            <input type="text" class="search-box" placeholder="Find Cars, Mobile Phones and more..." oninput="handleSearch(this.value)">
+        </div>
+
+        <!-- Categories -->
+        <div class="categories-container" id="main-categories">
+            <div style="padding:10px; color:#777;">Loading Categories...</div>
+        </div>
+
+        <!-- ================= SCREENS ================= -->
+
+        <!-- 1. HOME SCREEN -->
+        <div id="screen-home" class="screen active">
+            <h2 class="section-title">Fresh Recommendations</h2>
+            <div class="product-grid" id="home-grid"></div>
+        </div>
+
+        <!-- CATEGORY SCREENS -->
+        <div id="screen-category" class="screen">
+            <div class="category-header"><span id="cat-screen-title">Category</span></div>
+            <div class="product-grid" id="cat-grid"></div>
+        </div>
+
+        <!-- SELLER PROFILE SCREEN -->
+        <div id="screen-seller-profile" class="screen">
+             <div class="category-header"><span id="seller-profile-name">Seller Profile</span></div>
+             <div class="profile-header" style="border-bottom:none; display:flex; padding:20px; align-items:center; gap:15px; background:white;">
+                <img src="" class="profile-pic" id="seller-screen-pic" style="width:70px;height:70px;border-radius:50%;object-fit:cover;">
+                <div class="profile-info">
+                    <h2 id="seller-screen-name">Name</h2>
+                    <div class="p-loc" id="seller-screen-loc" style="color:#777;">Location</div>
+                </div>
+            </div>
+            <div style="background:#f2f4f5; padding:10px; font-weight:bold; color:#555;">Published Ads</div>
+            <div class="product-grid" id="seller-ads-grid"></div>
+        </div>
+
+        <!-- 2. CHAT INBOX SCREEN -->
+        <div id="screen-chat" class="screen">
+            <div class="category-header"><span>Inbox</span></div>
+            <div class="chat-list" id="chat-inbox-list">
+                <div class="placeholder-screen"><i class="far fa-comments"></i><h3>No messages yet</h3><p>Start a conversation from an ad!</p></div>
+            </div>
+        </div>
+
+        <!-- 2.5 CHAT CONVERSATION SCREEN -->
+        <div id="screen-chat-conversation" class="screen">
+            <div class="chat-window">
+                <div class="chat-header">
+                    <div class="chat-header-info">
+                        <span class="chat-header-title" id="chat-header-name">User Name</span>
+                        <span class="chat-header-sub" id="chat-header-ad">Ad Title</span>
+                    </div>
+                </div>
+                <div class="chat-messages" id="chat-messages-container"></div>
+                <div class="chat-input-area">
+                    <input type="text" class="chat-input" id="chat-input-field" placeholder="Type a message...">
+                    <button class="chat-send-btn" onclick="sendMessage()"><i class="fas fa-paper-plane"></i></button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. SELL SCREEN -->
+        <div id="screen-sell" class="screen">
+            <div class="sell-container">
+                <h2 class="form-header" id="sell-header">Include some details</h2>
+                <form id="sellForm">
+                    <div class="form-group">
+                        <label class="form-label">Category *</label>
+                        <select id="adCategory" class="form-control" onchange="handleCategoryChange()">
+                            <option value="" disabled selected>Select Category</option>
+                        </select>
+                    </div>
+
+                    <div id="dynamic-fields-container"></div>
+
+                    <div class="form-group"><label class="form-label">Ad Title *</label><input type="text" id="adTitle" class="form-control" placeholder="Mention key features"></div>
+                    
+                    <!-- NEW DISCOUNT LOGIC -->
+                    <div style="display:flex; gap:10px;">
+                        <div class="form-group" style="flex:1;">
+                            <label class="form-label">Original Price (MRP)</label>
+                            <input type="number" id="adMRP" class="form-control" placeholder="₹ Original">
+                        </div>
+                        <div class="form-group" style="flex:1;">
+                            <label class="form-label">Selling Price *</label>
+                            <input type="number" id="adPrice" class="form-control" placeholder="₹ Selling">
+                        </div>
+                    </div>
+
+                    <div class="form-group"><label class="form-label">Description</label><textarea id="adDesc" class="form-control" placeholder="Include condition, features..."></textarea></div>
+                    <div class="form-group">
+                        <label class="form-label">Upload Photos <span style="font-size:0.8rem;color:#666;">(Max 4 photos)</span></label>
+                        <div class="image-upload-area" id="imageContainer">
+                            <div class="upload-box" onclick="document.getElementById('fileInput').click()"><i class="fas fa-camera fa-lg"></i></div>
+                        </div>
+                        <input type="file" id="fileInput" hidden accept="image/*" multiple onchange="handleImageSelect(event)">
+                    </div>
+                    <button type="button" class="btn-submit" id="postAdBtn" onclick="postAd()">Post Now</button>
+                    <button type="button" class="btn-submit" id="updateAdBtn" onclick="updateAd()" style="display:none;">Update Ad</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- 4. NOTIFICATIONS SCREEN (REDESIGNED) -->
+        <div id="screen-notifications" class="screen">
+            <div class="category-header"><span>Notifications</span></div>
+            <div class="notif-list" id="notif-list-container">
+                 <div class="placeholder-screen"><i class="far fa-bell"></i><h3>No Notifications</h3><p>We'll notify you about interesting ads.</p></div>
+            </div>
+        </div>
+
+        <!-- 5. PROFESSIONAL PROFILE SCREEN -->
+        <div id="screen-profile" class="screen">
+            <!-- Hero Section -->
+            <div class="prof-hero">
+                <img src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png" alt="User" class="prof-pic-large" id="disp-profile-pic">
+                <h2 class="prof-name" id="disp-name">User Name</h2>
+                <div class="prof-detail" id="disp-email">user@email.com</div>
+                <div class="prof-detail" id="disp-loc">Location</div>
+            </div>
+            
+            <!-- Stats -->
+            <div class="prof-stats-container">
+                <div class="prof-stat-box">
+                    <div class="prof-stat-num" id="stat-ads-count">0</div>
+                    <div class="prof-stat-label">Active Ads</div>
+                </div>
+                <div class="prof-stat-box">
+                    <div class="prof-stat-num" id="stat-chats-count">0</div>
+                    <div class="prof-stat-label">Chats</div>
+                </div>
+            </div>
+
+            <!-- Menu Card -->
+            <div class="prof-menu-card">
+                <div class="prof-menu-item" onclick="openMyAds()">
+                    <div class="prof-menu-left"><i class="far fa-heart prof-menu-icon"></i> My Ads</div>
+                    <i class="fas fa-chevron-right" style="color:#ccc;"></i>
+                </div>
+                 <!-- NEW WISHLIST OPTION -->
+                <div class="prof-menu-item" onclick="openWishlistScreen()">
+                    <div class="prof-menu-left"><i class="fas fa-bookmark prof-menu-icon"></i> My Wishlist</div>
+                    <i class="fas fa-chevron-right" style="color:#ccc;"></i>
+                </div>
+                <div class="prof-menu-item" onclick="openEditProfile()">
+                    <div class="prof-menu-left"><i class="fas fa-cog prof-menu-icon"></i> Settings & Edit Profile</div>
+                    <i class="fas fa-chevron-right" style="color:#ccc;"></i>
+                </div>
+            </div>
+
+            <div class="logout-btn" onclick="appLogout()">Log Out</div>
+        </div>
+
+        <!-- EDIT PROFILE SCREEN -->
+        <div id="screen-edit-profile" class="screen">
+            <div class="category-header"><span>Edit Profile</span></div>
+            <div class="sell-container" style="min-height: auto;">
+                <div class="edit-profile-img-container" onclick="document.getElementById('profileFileInput').click()">
+                    <img src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png" id="preview-profile-pic" class="edit-profile-pic">
+                    <div class="edit-icon-overlay"><i class="fas fa-camera"></i></div>
+                    <input type="file" id="profileFileInput" hidden accept="image/*" onchange="handleProfilePicSelect(event)">
+                </div>
+                <div class="form-group"><label class="form-label">Full Name</label><input type="text" id="editName" class="form-control" placeholder="Enter your name"></div>
+                <div class="form-group"><label class="form-label">Phone Number</label><input type="tel" id="editPhone" class="form-control" placeholder="Enter phone number"></div>
+                <div class="form-group"><label class="form-label">Pincode</label><input type="number" id="editPincode" class="form-control" placeholder="e.g. 793001"></div>
+                
+                <div class="form-group">
+                    <label class="form-label">Location (City/Neighborhood)</label>
+                    <input type="text" id="editLocation" class="form-control" placeholder="e.g. Police Bazar">
+                </div>
+                
+                <!-- NEW STATE SELECTOR WITH MANUAL INPUT CAPABILITY -->
+                <div class="form-group">
+                    <label class="form-label">State</label>
+                    <input type="text" id="editState" list="state-options" class="form-control" placeholder="Select or type your state">
+                    <datalist id="state-options">
+                        <option value="Meghalaya">
+                        <option value="Assam">
+                        <option value="Manipur">
+                        <option value="Mizoram">
+                        <option value="Nagaland">
+                        <option value="Tripura">
+                        <option value="Arunachal Pradesh">
+                        <option value="Sikkim">
+                    </datalist>
+                </div>
+
+                <button type="button" class="btn-submit" onclick="saveProfile()">Save Changes</button>
+            </div>
+        </div>
+
+        <!-- MY ADS SCREEN -->
+        <div id="screen-my-ads" class="screen">
+            <div class="category-header"><span>My Ads</span></div>
+            <div class="product-grid" id="my-ads-grid" style="padding:10px;"></div>
+        </div>
+        
+        <!-- NEW WISHLIST SCREEN -->
+        <div id="screen-wishlist" class="screen">
+            <div class="category-header"><span>My Wishlist</span></div>
+            <div class="product-grid" id="wishlist-grid" style="padding:10px;"></div>
+        </div>
+
+        <!-- NEW: DRAWER CUSTOM PAGE SCREEN -->
+        <div id="screen-drawer-page" class="screen">
+            <div class="category-header">
+                <i class="fas fa-arrow-left" onclick="changeScreen('home', null)" style="margin-right:15px; cursor:pointer;"></i> 
+                <span id="drawer-page-title">Page Title</span>
+            </div>
+            <div class="sell-container">
+                <div id="drawer-page-body" class="drawer-text-content"></div>
+            </div>
+        </div>
+
+        <!-- PRODUCT DETAILS SCREEN -->
+        <div id="screen-details" class="screen">
+            <div class="details-header">
+                <div></div> <!-- Spacer for removed back button -->
+                <div>
+                     <!-- SHARE BUTTON -->
+                    <i class="fas fa-share-alt" onclick="handleShare()" style="margin-right: 15px;"></i>
+                    <!-- WISHLIST BUTTON -->
+                    <i class="far fa-heart" id="dt-wishlist-btn" onclick="toggleWishlistDetails()"></i>
+                </div>
+            </div>
+            <div class="image-slider" id="dt-slider"></div>
+            <div class="slider-counter" id="dt-counter">1/1</div>
+            <div class="details-content">
+                <div class="dt-price" id="dt-price">₹ 0</div>
+                <div class="dt-title" id="dt-title">Product Title</div>
+                <div class="dt-meta"><span id="dt-location"><i class="fas fa-map-marker-alt"></i> Location</span><span id="dt-date">Date</span></div>
+                
+                <!-- CUSTOM FEATURES CONTAINER -->
+                <div id="dt-features" style="margin-bottom:15px;"></div>
+
+                <h3 class="dt-section-title">Description</h3>
+                <p class="dt-description" id="dt-desc">No description available.</p>
+                <h3 class="dt-section-title">Seller Description</h3>
+                <div class="seller-profile" id="dt-seller-box">
+                    <img src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png" class="seller-img" alt="Seller" id="dt-seller-img">
+                    <div>
+                        <div class="seller-name" id="dt-seller-name">OLX User</div>
+                        <div class="seller-detail-row"><i class="fas fa-map-marker-alt"></i> <span id="dt-seller-loc">Shillong</span></div>
+                        <div class="seller-detail-row"><i class="fas fa-phone-alt"></i> <span id="dt-seller-phone">******</span></div>
+                    </div>
+                    <i class="fas fa-chevron-right" style="margin-left: auto; color: #002f34;"></i>
+                </div>
+
+                <!-- 3. SAFETY MESSAGE -->
+                <div class="safety-box">
+                    <i class="fas fa-shield-alt"></i> <b>Safety Tips:</b>
+                    <ul>
+                        <li>Do not pay in advance.</li>
+                        <li>Meet at a safe, public place.</li>
+                        <li>Check the item before buying.</li>
+                    </ul>
+                </div>
+
+                <!-- 2. ADS CONTAINER -->
+                <div class="ad-container-bottom">
+                    <div id="container-91e471e76cd27ae162946760c03872a2"></div>
+                </div>
+
+            </div>
+            <div class="action-bar"><button class="btn-chat" id="dt-chat-btn" onclick="startChatFromDetails()">Chat</button><button class="btn-offer" id="dt-offer-btn">Call Seller</button></div>
+        </div>
+
+        <!-- BOTTOM NAV -->
+        <div class="bottom-nav" id="bottom-nav">
+            <div class="nav-item active" id="nav-home" onclick="changeScreen('home', this)"><i class="fas fa-home"></i><span>Home</span></div>
+            <div class="nav-item" id="nav-chat" onclick="changeScreen('chat', this); loadChatInbox();">
+                <i class="far fa-comment-dots"></i>
+                <div class="nav-badge" id="chat-badge">0</div>
+                <span>Chat</span>
+            </div>
+            <div class="nav-item sell-btn-wrapper" onclick="openSellScreen()"><div class="sell-circle"><i class="fas fa-plus"></i></div><span style="margin-top: 5px;">Sell</span></div>
+            <div class="nav-item" id="nav-notifications" onclick="changeScreen('notifications', this); loadNotifications();">
+                <i class="far fa-bell"></i>
+                <div class="nav-badge" id="notif-badge">0</div>
+                <span>Notifications</span>
+            </div>
+            <div class="nav-item" id="nav-profile" onclick="changeScreen('profile', this)"><i class="far fa-user"></i><span>Account</span></div>
+        </div>
+
+    </div>
+
+    <!-- JAVASCRIPT & FIREBASE -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, sendPasswordResetEmail, signOut, updateProfile } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+        import { getFirestore, collection, addDoc, getDocs, getDoc, setDoc, deleteDoc, updateDoc, doc, query, where, orderBy, serverTimestamp, onSnapshot, increment, limit, getCountFromServer } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+
+        // Firebase Config
+        const firebaseConfig = {
+            apiKey: "AIzaSyBh-vevVOBijjanAwekcZBagdhWXyY2lFg",
+            authDomain: "meghalaya-olx.firebaseapp.com",
+            databaseURL: "https://meghalaya-olx-default-rtdb.firebaseio.com",
+            projectId: "meghalaya-olx",
+            storageBucket: "meghalaya-olx.firebasestorage.app",
+            messagingSenderId: "895634291266",
+            appId: "1:895634291266:web:9ff747cfb7b9e3a6620bdb"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const googleProvider = new GoogleAuthProvider();
+
+        let currentUser = null;
+        let selectedFiles = [];
+        let editingAdId = null; 
+        let dynamicFieldsData = [];
+        let userWishlist = [];
+        
+        // Initial state logic: default to user's saved state or fallback
+        let userProfile = {
+            name: "User",
+            phone: "+91 98000 00000",
+            location: "Shillong",
+            state: "Meghalaya",
+            pincode: "", 
+            pic: "https://cdn-icons-png.flaticon.com/512/3135/3135715.png"
+        };
+
+        // --- INSTALL PROMPT LOGIC ---
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            const btn = document.getElementById('install-btn');
+            btn.style.display = 'flex';
+            
+            btn.addEventListener('click', () => {
+                btn.style.display = 'none';
+                deferredPrompt.prompt();
+                deferredPrompt.userChoice.then((choiceResult) => {
+                    if (choiceResult.outcome === 'accepted') {
+                        console.log('User accepted install');
+                    }
+                    deferredPrompt = null;
+                });
+            });
+        });
+
+        // --- HELPER: RELATIVE TIME ---
+        window.timeAgo = (dateParam) => {
+            if (!dateParam) return 'Just now';
+            const date = typeof dateParam === 'object' ? dateParam : new Date(dateParam);
+            const today = new Date();
+            const seconds = Math.round((today - date) / 1000);
+            const minutes = Math.round(seconds / 60);
+            const hours = Math.round(minutes / 60);
+            const days = Math.round(hours / 24);
+
+            if (seconds < 60) return 'Just now';
+            else if (minutes < 60) return `${minutes} mins ago`;
+            else if (hours < 24) return `${hours} hrs ago`;
+            else if (days < 7) return `${days} days ago`;
+            else return date.toLocaleDateString();
+        };
+
+        // --- HISTORY API INIT ---
+        window.addEventListener('load', () => {
+            history.replaceState({ screen: 'home' }, '', '#home');
+            updateNotificationBadge();
+        });
+
+        // --- DRAWER LOGIC ---
+        window.toggleDrawer = (open) => {
+            const overlay = document.getElementById('drawer-overlay');
+            const content = document.getElementById('drawer-content');
+            if(open) {
+                overlay.classList.add('open');
+                content.classList.add('open');
+                // Fill drawer header info
+                document.getElementById('drawer-name').innerText = userProfile.name;
+                document.getElementById('drawer-email').innerText = currentUser ? currentUser.email : "Guest";
+                loadDrawerOptions();
+            } else {
+                overlay.classList.remove('open');
+                content.classList.remove('open');
+            }
+        };
+
+        // Load Drawer Items from Admin Panel (Firestore)
+        async function loadDrawerOptions() {
+            const container = document.getElementById('drawer-dynamic-menu');
+            container.innerHTML = '<div style="padding:15px; color:#999;">Loading...</div>';
+            
+            try {
+                const q = query(collection(db, "app_drawer"), orderBy("order", "asc"));
+                const snap = await getDocs(q);
+                
+                if(snap.empty) {
+                    container.innerHTML = `
+                        <div class="drawer-item" onclick="changeScreen('home', document.getElementById('nav-home'));toggleDrawer(false);"><i class="fas fa-home"></i> Home</div>
+                        <div class="drawer-item" onclick="changeScreen('profile', document.getElementById('nav-profile'));toggleDrawer(false);"><i class="fas fa-user"></i> My Account</div>
+                    `;
+                    return;
+                }
+                
+                let html = '';
+                // Always add Home first
+                html += `<div class="drawer-item" onclick="changeScreen('home', document.getElementById('nav-home'));toggleDrawer(false);"><i class="fas fa-home"></i> Home</div>`;
+                
+                snap.forEach(doc => {
+                    const item = doc.data();
+                    const iconClass = item.icon ? item.icon : 'fa-circle';
+                    
+                    let action = '';
+                    // SMART LINK DETECTION
+                    if(item.link && item.link.startsWith('http')) {
+                        // It's a URL
+                        action = `window.open('${item.link}', '_blank'); toggleDrawer(false);`;
+                    } else if (item.link) {
+                        // It's Content Text -> Open Custom Page
+                        // Escape quotes in content
+                        const safeTitle = item.title.replace(/'/g, "\\'");
+                        const safeContent = encodeURIComponent(item.link); // Safe way to pass text content
+                        action = `openDrawerPage('${safeTitle}', '${safeContent}'); toggleDrawer(false);`;
+                    } else {
+                        action = `toggleDrawer(false);`;
+                    }
+                    
+                    html += `<div class="drawer-item" onclick="${action}"><i class="fas ${iconClass}"></i> ${item.title}</div>`;
+                });
+                
+                container.innerHTML = html;
+
+            } catch (e) {
+                console.error("Drawer load error", e);
+                container.innerHTML = `<div class="drawer-item" onclick="changeScreen('home', null);toggleDrawer(false);"><i class="fas fa-home"></i> Home</div>`;
+            }
+        }
+
+        // Open Custom Drawer Page
+        window.openDrawerPage = (title, encodedContent) => {
+            const content = decodeURIComponent(encodedContent);
+            document.getElementById('drawer-page-title').innerText = title;
+            document.getElementById('drawer-page-body').innerText = content; // innerText respects whitespace style
+            changeScreen('drawer-page', null);
+        };
+
+        // --- NAVIGATION LOGIC ---
+        window.changeScreen = (screenName, navElement, addToHistory = true) => {
+            const mainTabs = ['home', 'chat', 'notifications', 'profile', 'sell'];
+            const showNav = mainTabs.includes(screenName);
+            
+            if (screenName === 'chat-conversation' || screenName === 'drawer-page') {
+                 document.getElementById('main-header').style.display = 'none'; 
+                 document.getElementById('bottom-nav').style.display = 'none';
+            } else if (showNav) {
+                document.getElementById('bottom-nav').style.display = 'flex'; 
+                document.getElementById('main-header').style.display = 'flex';
+            } else {
+                document.getElementById('bottom-nav').style.display = 'none'; 
+                document.getElementById('main-header').style.display = 'none';
+            }
+
+            if (addToHistory && (!history.state || history.state.screen !== screenName)) { 
+                history.pushState({ screen: screenName }, '', `#${screenName}`); 
+            }
+
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById('screen-' + screenName).classList.add('active');
+            
+            document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+            if(navElement){ navElement.classList.add('active'); } 
+            else if (screenName === 'chat-conversation') { document.getElementById('nav-chat').classList.add('active'); } 
+            else if (screenName === 'my-ads' || screenName === 'edit-profile' || screenName === 'wishlist') { document.getElementById('nav-profile').classList.add('active'); } 
+            else if (screenName === 'home') { document.getElementById('nav-home').classList.add('active'); }
+
+            const searchContainer = document.getElementById('main-search');
+            const catContainer = document.getElementById('main-categories');
+            if(screenName === 'home') { searchContainer.style.display='block'; catContainer.style.display='flex'; } 
+            else { searchContainer.style.display='none'; catContainer.style.display='none'; }
+            
+            if(screenName !== 'chat-conversation') window.scrollTo(0,0);
+        };
+
+        window.addEventListener('popstate', (event) => {
+            if(event.state && event.state.screen) { changeScreen(event.state.screen, null, false); } 
+            else { changeScreen('home', document.getElementById('nav-home'), false); }
+        });
+
+        // --- SEARCH LOGIC ---
+        window.handleSearch = (queryText) => {
+            const grid = document.getElementById('home-grid');
+            if(!queryText || queryText.trim() === '') { 
+                loadFirestoreAds(); 
+                return; 
+            }
+            const lowerQuery = queryText.toLowerCase();
+            const cachedAds = JSON.parse(localStorage.getItem('olx_cached_ads') || '[]');
+            const filtered = cachedAds.filter(ad => 
+                (ad.title && ad.title.toLowerCase().includes(lowerQuery)) || 
+                (ad.category && ad.category.toLowerCase().includes(lowerQuery))
+            );
+            grid.innerHTML = '';
+            if(filtered.length === 0) {
+                grid.innerHTML = '<div style="padding:20px; text-align:center; grid-column:span 2;">No results found.</div>';
+            } else {
+                filtered.forEach(ad => createCardFromDataObj(ad, grid, false));
+            }
+        };
+
+        // --- ALERTS ---
+        let alertCallback = null;
+        window.showAlert = (title, msg) => {
+            document.getElementById('alert-title').innerText = title || "Alert";
+            document.getElementById('alert-msg').innerText = msg;
+            document.getElementById('alert-cancel').style.display = 'none';
+            document.getElementById('custom-alert-overlay').style.display = 'flex';
+            alertCallback = null;
+        };
+        window.showConfirm = (title, msg, callback) => {
+            document.getElementById('alert-title').innerText = title || "Confirm";
+            document.getElementById('alert-msg').innerText = msg;
+            document.getElementById('alert-cancel').style.display = 'block';
+            document.getElementById('custom-alert-overlay').style.display = 'flex';
+            alertCallback = callback;
+        };
+        window.closeCustomAlert = (isOk) => {
+            document.getElementById('custom-alert-overlay').style.display = 'none';
+            if(isOk && alertCallback) alertCallback();
+        };
+
+        // --- BOOST CELEBRATION MODAL ---
+        window.showBoostResult = (isApproved, days, msg) => {
+            const overlay = document.getElementById('boost-result-overlay');
+            const card = document.getElementById('res-card');
+            const icon = card.querySelector('.result-icon');
+            const title = card.querySelector('.result-title');
+            const body = card.querySelector('.result-msg');
+            const btn = card.querySelector('.btn-result');
+
+            if (isApproved) {
+                card.className = "result-card res-success";
+                icon.innerHTML = '<i class="fas fa-rocket"></i>';
+                title.innerText = "Congratulations!";
+                body.innerText = msg || `Your ad is now featured for ${days} days. Good luck selling!`;
+                btn.className = "btn-result btn-res-ok";
+                btn.innerText = "Awesome!";
+            } else {
+                card.className = "result-card res-error";
+                icon.innerHTML = '<i class="fas fa-times-circle"></i>';
+                title.innerText = "Boost Rejected";
+                body.innerText = msg || "There was an issue with your payment proof. Please contact support.";
+                btn.className = "btn-result";
+                btn.style.backgroundColor = "#ff3a3a";
+                btn.style.color = "white";
+                btn.innerText = "Close";
+            }
+            overlay.style.display = 'flex';
+        };
+
+
+        // --- OFFLINE TOAST ---
+        function checkNetworkStatus() {
+            const toast = document.getElementById('offline-toast');
+            if(!navigator.onLine) { toast.classList.add('show'); } else { toast.classList.remove('show'); }
+        }
+        window.addEventListener('online', checkNetworkStatus);
+        window.addEventListener('offline', checkNetworkStatus);
+        checkNetworkStatus(); 
+
+        // --- 1. INTERSTITIAL AUTO ADS LOGIC ---
+        let adCloseTimer = null;
+        let adCountdownVal = 5;
+
+        async function showInterstitialAd() {
+            try {
+                const q = query(collection(db, "banners"));
+                const snap = await getDocs(q);
+                if(snap.empty) return; 
+                const banners = []; snap.forEach(d => banners.push(d.data()));
+                const ad = banners[Math.floor(Math.random() * banners.length)];
+                
+                document.getElementById('ad-full-img').src = ad.imageUrl;
+                document.getElementById('ad-full-img').dataset.link = ad.targetUrl;
+                
+                const overlay = document.getElementById('interstitial-overlay');
+                const btn = document.getElementById('ad-close-btn');
+                const badge = document.getElementById('ad-countdown');
+                
+                overlay.style.display = 'flex';
+                btn.classList.remove('active');
+                adCountdownVal = 5;
+                badge.innerText = adCountdownVal;
+
+                adCloseTimer = setInterval(() => {
+                    adCountdownVal--;
+                    badge.innerText = adCountdownVal;
+                    if(adCountdownVal <= 0) {
+                        clearInterval(adCloseTimer);
+                        btn.classList.add('active');
+                        badge.innerText = "X";
+                    }
+                }, 1000);
+            } catch(e) { console.log("Ad load error", e); }
+        }
+
+        window.closeInterstitial = () => {
+             document.getElementById('interstitial-overlay').style.display = 'none';
+             if(adCloseTimer) clearInterval(adCloseTimer);
+        };
+
+        window.handleAdClick = () => {
+            const url = document.getElementById('ad-full-img').dataset.link;
+            if(url) window.open(url, '_blank');
+        };
+
+        // --- 2. DYNAMIC CATEGORIES LOGIC ---
+        async function loadDynamicCategories() {
+            const container = document.getElementById('main-categories');
+            const select = document.getElementById('adCategory');
+            try {
+                const q = query(collection(db, "categories"));
+                const snap = await getDocs(q);
+                if(snap.empty) {
+                    const fallback = ['Cars','Mobiles','Bikes','Furniture','Properties','Fashion'];
+                    let html = ''; let opts = `<option value="" disabled selected>Select Category</option>`;
+                    fallback.forEach(c => {
+                        html += `<div class="cat-item" onclick="openCategory('${c}')"><div class="cat-icon"><i class="fas fa-tag"></i></div><div class="cat-name">${c}</div></div>`;
+                        opts += `<option value="${c}">${c}</option>`;
+                    });
+                    container.innerHTML = html; select.innerHTML = opts; return;
+                }
+                let html = ''; let opts = `<option value="" disabled selected>Select Category</option>`;
+                snap.forEach(doc => {
+                    const c = doc.data();
+                    const iconClass = c.icon && c.icon.startsWith('fa') ? c.icon : 'fa-layer-group';
+                    html += `<div class="cat-item" onclick="openCategory('${c.name}')"><div class="cat-icon"><i class="fas ${iconClass}"></i></div><div class="cat-name">${c.name}</div></div>`;
+                    opts += `<option value="${c.name}">${c.name}</option>`;
+                });
+                container.innerHTML = html; select.innerHTML = opts;
+            } catch(e) { console.error("Cat load error", e); }
+        }
+
+        // --- 3. DYNAMIC FORM BUILDER LOGIC ---
+        window.handleCategoryChange = async () => {
+            const cat = document.getElementById('adCategory').value;
+            const container = document.getElementById('dynamic-fields-container');
+            container.style.display = 'none'; container.innerHTML = ''; dynamicFieldsData = []; 
+            if(!cat) return;
+            try {
+                const q = query(collection(db, "category_fields"), where("category", "==", cat));
+                const snap = await getDocs(q);
+                if(snap.empty) return;
+                container.style.display = 'block'; container.innerHTML = '<h4>Additional Details</h4>';
+                snap.forEach(doc => {
+                    const f = doc.data();
+                    dynamicFieldsData.push({ ...f, id: doc.id });
+                    const div = document.createElement('div'); div.className = 'form-group';
+                    const fieldId = `field_${doc.id}`;
+                    let inputHtml = '';
+                    if(f.type === 'dropdown' && f.options) {
+                        inputHtml = `<select id="${fieldId}" class="form-control"><option value="">Select ${f.label}</option>${f.options.map(o => `<option value="${o}">${o}</option>`).join('')}</select>`;
+                    } else if (f.type === 'textarea') {
+                        inputHtml = `<textarea id="${fieldId}" class="form-control" placeholder="${f.label}" style="height:60px"></textarea>`;
+                    } else {
+                        inputHtml = `<input type="text" id="${fieldId}" class="form-control" placeholder="${f.label}">`;
+                    }
+                    div.innerHTML = `<label class="form-label">${f.label}</label>${inputHtml}`;
+                    container.appendChild(div);
+                });
+            } catch(e) { console.error("Field load error", e); }
+        };
+
+        // --- 4. BOOST REQUEST LOGIC (DYNAMIC PACKAGES) ---
+        let selectedBoostDays = 0; let selectedBoostAmount = 0; let selectedBoostAdId = null; let compressedProof = null;
+        
+        window.openBoostModal = async (adId) => {
+            selectedBoostAdId = adId; 
+            document.getElementById('boost-overlay').style.display = 'flex';
+            document.getElementById('boost-payment-section').style.display = 'none';
+            
+            // Load Dynamic Packages from Admin
+            const container = document.getElementById('boost-options-container');
+            container.innerHTML = '<div style="padding:15px; text-align:center;">Loading plans...</div>';
+            
+            try {
+                const snap = await getDocs(collection(db, "boost_packages"));
+                if(snap.empty) {
+                    container.innerHTML = `
+                        <div class="boost-option" onclick="selectBoostPlan(3, 99, this)"><div><b>3 Days</b><br><small>Quick visibility</small></div><div class="boost-price">₹99</div></div>
+                        <div class="boost-option" onclick="selectBoostPlan(7, 199, this)"><div><b>7 Days</b><br><small>Standard reach</small></div><div class="boost-price">₹199</div></div>
+                    `;
+                } else {
+                    let html = '';
+                    snap.forEach(d => {
+                        const p = d.data();
+                        html += `<div class="boost-option" onclick="selectBoostPlan(${p.days}, ${p.price}, this)"><div><b>${p.name || p.days + ' Days'}</b><br><small>${p.days} Days visibility</small></div><div class="boost-price">₹${p.price}</div></div>`;
+                    });
+                    container.innerHTML = html;
+                }
+            } catch(e) { container.innerHTML = 'Error loading plans'; }
+        };
+        
+        window.closeBoostModal = () => { document.getElementById('boost-overlay').style.display = 'none'; };
+        
+        window.selectBoostPlan = async (days, amount, el) => {
+            document.querySelectorAll('.boost-option').forEach(d => d.classList.remove('selected'));
+            el.classList.add('selected');
+            selectedBoostDays = days; selectedBoostAmount = amount;
+            const paymentSec = document.getElementById('boost-payment-section');
+            document.getElementById('pay-amount').innerText = `₹${amount}`;
+            document.getElementById('payment-qr').src = 'https://via.placeholder.com/150?text=Loading...';
+            paymentSec.style.display = 'block'; paymentSec.scrollIntoView({behavior: 'smooth'});
+            try {
+                const docSnap = await getDoc(doc(db, "settings", "payment"));
+                if(docSnap.exists() && docSnap.data().qrCode) { document.getElementById('payment-qr').src = docSnap.data().qrCode; } 
+                else { document.getElementById('payment-qr').alt = "No QR Configured"; }
+            } catch(e) { console.error(e); }
+        };
+
+        window.handleBoostPaymentUpload = async (e) => {
+            const file = e.target.files[0]; if(file) compressedProof = await compressImage(file, 50000);
+        };
+
+        window.submitBoostRequest = async () => {
+            if(!compressedProof) return showAlert("Alert", "Please upload payment screenshot");
+            const btn = document.getElementById('btn-submit-boost'); btn.innerText = "Submitting..."; btn.disabled = true;
+            try {
+                await addDoc(collection(db, "boost_requests"), {
+                    adId: selectedBoostAdId, sellerId: currentUser.uid, days: selectedBoostDays,
+                    amount: selectedBoostAmount, proof: compressedProof, status: 'pending', createdAt: serverTimestamp()
+                });
+                closeBoostModal(); showAlert("Success", "Boost request submitted! Admin will approve shortly.");
+            } catch(e) { showAlert("Error", e.message); } finally { btn.innerText = "Submit Request"; btn.disabled = false; }
+        };
+
+        // --- AUTH ---
+        (function checkLocalStorage() {
+            const storedUser = localStorage.getItem('olx_user_logged_in');
+            if(storedUser === 'true') {
+                document.getElementById('auth-overlay').style.display = 'none';
+                document.getElementById('loading-overlay').style.display = 'flex';
+                updateProgressBar(10, 'Initializing App...');
+            } else {
+                document.getElementById('loading-overlay').style.display = 'none';
+                document.getElementById('auth-overlay').style.display = 'flex';
+            }
+        })();
+
+        function updateProgressBar(percent, text) {
+            document.getElementById('progress-bar-fill').style.width = percent + '%';
+            if(text) document.getElementById('loading-status').innerText = text;
+        }
+
+        window.switchAuth = (view) => {
+            ['login','signup','forgot'].forEach(v => document.getElementById('view-'+v).classList.add('hidden'));
+            document.getElementById('view-'+view).classList.remove('hidden');
+        };
+        window.showForgot = () => window.switchAuth('forgot');
+
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                updateProgressBar(30, 'Verifying User...');
+                currentUser = user;
+                localStorage.setItem('olx_user_logged_in', 'true'); 
+
+                try {
+                    const userDocRef = doc(db, "users", user.uid);
+                    const userDocSnap = await getDoc(userDocRef);
+                    updateProgressBar(50, 'Fetching Profile...');
+                    
+                    if(userDocSnap.exists()) {
+                        const data = userDocSnap.data();
+                        userProfile.name = data.name || user.displayName || "User";
+                        userProfile.phone = data.phone || "";
+                        userProfile.location = data.location || "";
+                        userProfile.state = data.state || "Meghalaya";
+                        userProfile.pincode = data.pincode || ""; 
+                        userProfile.pic = data.pic || userProfile.pic;
+                        userWishlist = data.wishlist || []; // Load wishlist from DB
+                    } else {
+                        userProfile.name = user.displayName || "User";
+                        userProfile.email = user.email;
+                    }
+                    
+                    localStorage.setItem('olx_wishlist_ids', JSON.stringify(userWishlist)); // Sync Local
+                    await updateProfileUI();
+                    updateProgressBar(70, 'Loading Market...');
+                    
+                    await loadDynamicCategories();
+                    await loadFirestoreAds(); 
+                    startChatListener();
+                    
+                    setTimeout(() => showInterstitialAd(), 2000);
+
+                    updateProgressBar(100, 'Ready!');
+                    setTimeout(() => {
+                        document.getElementById('loading-overlay').style.display = 'none';
+                        document.getElementById('auth-overlay').style.display = 'none';
+                        document.getElementById('app-wrapper').style.display = 'flex'; 
+                    }, 500); 
+
+                } catch (err) {
+                    console.error(err);
+                    document.getElementById('loading-overlay').style.display = 'none';
+                    document.getElementById('app-wrapper').style.display = 'flex';
+                }
+
+            } else {
+                currentUser = null;
+                localStorage.removeItem('olx_user_logged_in');
+                document.getElementById('loading-overlay').style.display = 'none';
+                document.getElementById('auth-overlay').style.display = 'flex';
+                document.getElementById('app-wrapper').style.display = 'none';
+            }
+        });
+
+        async function updateProfileUI() {
+            // General Info
+            document.getElementById('disp-name').innerText = userProfile.name;
+            document.getElementById('disp-email').innerText = currentUser.email || "";
+            document.getElementById('disp-loc').innerText = (userProfile.location || "City") + ", " + userProfile.state;
+            
+            // Header Location Text
+            document.getElementById('header-location-text').innerText = (userProfile.location || "City") + ", " + userProfile.state;
+
+            // Images
+            const pic = userProfile.pic && userProfile.pic !== 'undefined' ? userProfile.pic : "https://cdn-icons-png.flaticon.com/512/3135/3135715.png";
+            document.getElementById('disp-profile-pic').src = pic;
+            document.getElementById('preview-profile-pic').src = pic;
+            
+            // Edit Form
+            document.getElementById('editName').value = userProfile.name;
+            document.getElementById('editPhone').value = userProfile.phone;
+            document.getElementById('editLocation').value = userProfile.location;
+            document.getElementById('editState').value = userProfile.state;
+            document.getElementById('editPincode').value = userProfile.pincode; 
+
+            // Stats (Professional Profile)
+            try {
+                // Count Ads
+                const qAds = query(collection(db, "ads"), where("sellerId", "==", currentUser.uid));
+                const snapAds = await getCountFromServer(qAds);
+                document.getElementById('stat-ads-count').innerText = snapAds.data().count;
+
+                // Count Chats (simple approximation via unread snapshot or basic query)
+                const qChats = query(collection(db, "chats"), where("participants", "array-contains", currentUser.uid));
+                const snapChats = await getCountFromServer(qChats);
+                document.getElementById('stat-chats-count').innerText = snapChats.data().count;
+            } catch (e) {
+                console.log("Stats error", e);
+            }
+        }
+
+        window.appLogin = async () => {
+            try { await signInWithEmailAndPassword(auth, document.getElementById('login-email').value, document.getElementById('login-password').value); } 
+            catch { document.getElementById('login-error').innerText="Invalid Login"; document.getElementById('login-error').style.display='block'; }
+        };
+        window.appSignup = async () => {
+            try { 
+                const res = await createUserWithEmailAndPassword(auth, document.getElementById('signup-email').value, document.getElementById('signup-password').value);
+                await updateProfile(res.user, { displayName: document.getElementById('signup-name').value });
+                await setDoc(doc(db, "users", res.user.uid), {
+                    name: document.getElementById('signup-name').value,
+                    email: document.getElementById('signup-email').value,
+                    state: "Meghalaya",
+                    createdAt: serverTimestamp(),
+                    wishlist: []
+                });
+            } catch(e) { document.getElementById('signup-error').innerText=e.message; document.getElementById('signup-error').style.display='block'; }
+        };
+        window.appGoogleLogin = async () => { try { await signInWithPopup(auth, googleProvider); } catch(e){ showAlert("Error", e.message); } };
+        window.appForgot = async () => { try { await sendPasswordResetEmail(auth, document.getElementById('forgot-email').value); showAlert("Success", "Reset link sent!"); window.switchAuth('login'); } catch(e){ document.getElementById('forgot-error').innerText=e.message; document.getElementById('forgot-error').style.display='block'; } };
+        window.appLogout = () => { localStorage.removeItem('olx_user_logged_in'); signOut(auth); };
+
+        // --- CORE FUNCTIONS & HELPERS ---
+        async function compressImage(file, maxSizeByte = 60000) {
+            return new Promise((resolve) => {
+                const reader = new FileReader(); reader.readAsDataURL(file);
+                reader.onload = (event) => {
+                    const img = new Image(); img.src = event.target.result;
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        let width = img.width; let height = img.height; const MAX_WIDTH = 600; 
+                        if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
+                        canvas.width = width; canvas.height = height;
+                        const ctx = canvas.getContext('2d'); ctx.drawImage(img, 0, 0, width, height);
+                        let quality = 0.7; let dataUrl = canvas.toDataURL('image/jpeg', quality);
+                        while (dataUrl.length > maxSizeByte && quality > 0.1) { quality -= 0.1; dataUrl = canvas.toDataURL('image/jpeg', quality); }
+                        resolve(dataUrl);
+                    };
+                };
+            });
+        }
+
+        window.handleImageSelect = async (event) => {
+            const files = event.target.files;
+            if (selectedFiles.length + files.length > 4) { showAlert("Limit Reached", "Max 4 images."); return; }
+            const btn = document.querySelector('.btn-submit'); btn.innerText = "Compressing...";
+            for (let i = 0; i < files.length; i++) { if(selectedFiles.length < 4) { selectedFiles.push(await compressImage(files[i], 60000)); } }
+            renderPreviews(); btn.innerText = editingAdId ? "Update Ad" : "Post Now";
+        };
+
+        function renderPreviews() {
+            const container = document.getElementById('imageContainer');
+            container.innerHTML = `<div class="upload-box" onclick="document.getElementById('fileInput').click()"><i class="fas fa-camera fa-lg"></i></div>`;
+            selectedFiles.forEach((base64, index) => {
+                const div = document.createElement('div'); div.className = 'preview-box';
+                div.innerHTML = `<img src="${base64}"><div class="remove-img" onclick="removeImage(${index})"><i class="fas fa-times"></i></div>`;
+                container.appendChild(div);
+            });
+        }
+        window.removeImage = (index) => { selectedFiles.splice(index, 1); renderPreviews(); };
+
+        // --- NOTIFICATIONS ---
+        function trackInterest(category) {
+            let interests = JSON.parse(localStorage.getItem('olx_interests')) || [];
+            interests = interests.filter(c => c !== category);
+            interests.unshift(category);
+            if(interests.length > 5) interests.pop();
+            localStorage.setItem('olx_interests', JSON.stringify(interests));
+        }
+
+        function updateNotificationBadge() {
+            const lastRead = localStorage.getItem('olx_notif_last_read') || 0;
+            const badge = document.getElementById('notif-badge');
+            const lastAlert = localStorage.getItem('olx_last_alert_time') || 0;
+            if(lastAlert > lastRead) {
+                badge.innerText = "!"; 
+                badge.style.display = 'block';
+            } else {
+                badge.style.display = 'none';
+            }
+        }
+
+        window.loadNotifications = async () => {
+            document.getElementById('notif-badge').style.display = 'none';
+            localStorage.setItem('olx_notif_last_read', Date.now());
+
+            const container = document.getElementById('notif-list-container');
+            container.innerHTML = '<div style="padding:20px;text-align:center;color:#999;">Loading updates...</div>';
+            
+            let allNotifs = [];
+
+            try {
+                const interests = JSON.parse(localStorage.getItem('olx_interests')) || [];
+                const q = query(collection(db, "ads"), orderBy("createdAt", "desc"), limit(20));
+                const snapshot = await getDocs(q);
+                
+                let rawDocs = []; 
+                snapshot.forEach(doc => rawDocs.push({id: doc.id, ...doc.data()}));
+                
+                if(interests.length > 0) {
+                    const topInterest = interests[0];
+                    const match = rawDocs.find(d => d.category === topInterest);
+                    if(match) { 
+                        allNotifs.push({ 
+                            type: 'ad',
+                            title: `New in ${topInterest}`, 
+                            body: `Check out: ${match.title}`, 
+                            data: match, 
+                            icon: 'fa-star',
+                            time: match.createdAt ? match.createdAt.toDate() : new Date()
+                        }); 
+                    }
+                }
+                
+                if(rawDocs.length > 0) {
+                    const random = rawDocs[Math.floor(Math.random() * Math.min(rawDocs.length, 5))];
+                    allNotifs.push({ 
+                        type: 'ad',
+                        title: 'Recommended for you', 
+                        body: `Take a look at ${random.title}`, 
+                        data: random, 
+                        icon: 'fa-fire',
+                        time: random.createdAt ? random.createdAt.toDate() : new Date()
+                    });
+                }
+            } catch(e) { console.error("Ad notif error", e); }
+
+            if(currentUser) {
+                try {
+                    const qBoost = query(collection(db, "boost_requests"), where("sellerId", "==", currentUser.uid), limit(10));
+                    const boostSnap = await getDocs(qBoost);
+                    boostSnap.forEach(doc => {
+                        const b = doc.data();
+                        if(b.status === 'approved' || b.status === 'rejected') {
+                            const isApproved = b.status === 'approved';
+                            // New click action calls the Celebration Modal
+                            allNotifs.push({
+                                type: 'boost',
+                                title: isApproved ? 'Boost Approved! 🚀' : 'Boost Rejected ❌',
+                                body: isApproved ? 'Your ad is now featured.' : 'Please contact support.',
+                                icon: isApproved ? 'fa-rocket' : 'fa-times-circle',
+                                time: b.createdAt ? b.createdAt.toDate() : new Date(), 
+                                clickAction: () => showBoostResult(isApproved, b.days, isApproved ? `Your ad is now live in the Featured section for ${b.days} days.` : "Your boost request was rejected. Please check payment proof.")
+                            });
+                        }
+                    });
+                } catch(e) { console.error("Boost notif error", e); }
+            }
+
+            if(allNotifs.length === 0) {
+                container.innerHTML = `<div class="placeholder-screen"><i class="far fa-bell"></i><h3>No Notifications</h3><p>We'll notify you about interesting ads.</p></div>`;
+            } else {
+                allNotifs.sort((a,b) => b.time - a.time);
+                localStorage.setItem('olx_last_alert_time', allNotifs[0].time.getTime());
+
+                let html = '';
+                allNotifs.forEach(n => {
+                    const timeStr = timeAgo(n.time);
+                    let clickAttr = '';
+                    if(n.type === 'ad') {
+                        const dataStr = encodeURIComponent(JSON.stringify(n.data));
+                        clickAttr = `onclick="handleNotificationClick('${dataStr}')"`;
+                    } else if (n.clickAction) {
+                         // Wrap the function call safely
+                        clickAttr = `onclick="this.classList.add('clicked'); (${n.clickAction.toString()})()"`; 
+                    } else {
+                        clickAttr = `onclick="this.classList.add('clicked'); showAlert('${n.title}', '${n.body}')"`;
+                    }
+
+                    // Professional Card Design
+                    html += `
+                    <div class="notif-card type-${n.type}" ${clickAttr}>
+                        <div class="notif-icon-box"><i class="fas ${n.icon}"></i></div>
+                        <div class="notif-content-wrapper">
+                            <div class="notif-header-row">
+                                <span class="notif-title-pro">${n.title}</span>
+                                <span class="notif-time-pro">${timeStr}</span>
+                            </div>
+                            <div class="notif-body-pro">${n.body}</div>
+                            <div class="notif-action-hint">Tap to view</div>
+                        </div>
+                    </div>`;
+                });
+                container.innerHTML = html;
+            }
+        };
+
+        window.handleNotificationClick = (dataStr) => {
+            try { const data = JSON.parse(decodeURIComponent(dataStr)); loadProductDetails(data); } catch(e) { console.error(e); }
+        };
+
+        // --- FIRESTORE ADS ---
+        window.openSellScreen = () => {
+            editingAdId = null; document.getElementById('sellForm').reset(); selectedFiles = []; renderPreviews();
+            document.getElementById('sell-header').innerText = "Include some details";
+            document.getElementById('postAdBtn').style.display = 'block'; document.getElementById('updateAdBtn').style.display = 'none';
+            document.getElementById('dynamic-fields-container').style.display='none';
+            changeScreen('sell', document.querySelector('.sell-btn-wrapper'));
+        };
+
+        window.postAd = async () => {
+            if(!validateAdForm()) return;
+            setLoading(true, "Posting...");
+            const customData = {};
+            dynamicFieldsData.forEach(field => {
+                const val = document.getElementById(`field_${field.id}`).value;
+                if(val) customData[field.label] = val;
+            });
+            try {
+                let finalImages = selectedFiles.length > 0 ? selectedFiles : ["https://via.placeholder.com/400x300?text=No+Image"];
+                // New Fields: MRP
+                const mrp = document.getElementById('adMRP').value;
+                const sellingPrice = document.getElementById('adPrice').value;
+
+                await addDoc(collection(db, "ads"), {
+                    title: document.getElementById('adTitle').value, 
+                    price: sellingPrice,
+                    mrp: mrp ? mrp : null, // Save MRP
+                    category: document.getElementById('adCategory').value, description: document.getElementById('adDesc').value,
+                    images: finalImages, sellerId: currentUser.uid, sellerName: userProfile.name,
+                    sellerPic: userProfile.pic, sellerPhone: userProfile.phone, 
+                    location: userProfile.location + ", " + userProfile.state, // Post with user's specific state
+                    customDetails: customData, createdAt: serverTimestamp(), featured: false
+                });
+                showAlert("Success", "Ad Live!"); openMyAds(); 
+            } catch (e) { showAlert("Error", e.message); } finally { setLoading(false, "Post Now"); }
+        };
+
+        window.updateAd = async () => {
+            if(!editingAdId || !validateAdForm()) return;
+            setLoading(true, "Updating...", 'updateAdBtn');
+            try {
+                let finalImages = selectedFiles.length > 0 ? selectedFiles : ["https://via.placeholder.com/400x300?text=No+Image"];
+                const adRef = doc(db, "ads", editingAdId);
+                const mrp = document.getElementById('adMRP').value;
+                await updateDoc(adRef, {
+                    title: document.getElementById('adTitle').value, 
+                    price: document.getElementById('adPrice').value,
+                    mrp: mrp ? mrp : null,
+                    category: document.getElementById('adCategory').value, description: document.getElementById('adDesc').value,
+                    images: finalImages, updatedAt: serverTimestamp()
+                });
+                showAlert("Success", "Ad Updated!"); openMyAds();
+            } catch(e) { showAlert("Error", e.message); } finally { setLoading(false, "Update Ad", 'updateAdBtn'); }
+        };
+
+        function validateAdForm(){
+            if(!document.getElementById('adCategory').value || !document.getElementById('adTitle').value || !document.getElementById('adPrice').value) {
+                showAlert("Missing Info", "Fill Category, Title and Price"); return false;
+            }
+            return true;
+        }
+
+        function setLoading(isLoading, text, btnId = 'postAdBtn'){
+            const btn = document.getElementById(btnId); btn.innerText = text; btn.disabled = isLoading;
+        }
+
+        // --- 2. UPDATED ADS LOADING & SORTING ---
+        async function loadFirestoreAds() {
+            const grid = document.getElementById('home-grid');
+            if(navigator.onLine) {
+                try {
+                    const q = query(collection(db, "ads"), orderBy("createdAt", "desc"));
+                    const querySnapshot = await getDocs(q);
+                    if (querySnapshot.empty) { grid.innerHTML = '<div style="padding:20px;">No ads found.</div>'; localStorage.setItem('olx_cached_ads', '[]'); return; }
+                    grid.innerHTML = '';
+                    let cacheArray = [];
+                    querySnapshot.forEach((doc) => {
+                        const data = doc.data(); const adObj = { id: doc.id, ...data };
+                        cacheArray.push(adObj);
+                    });
+                    
+                    // --- SORTING: BOOSTED (FEATURED) ADS FIRST ---
+                    cacheArray.sort((a, b) => {
+                        if (b.featured && !a.featured) return 1;
+                        if (!b.featured && a.featured) return -1;
+                        return 0; 
+                    });
+
+                    cacheArray.forEach(ad => createCardFromDataObj(ad, grid, false));
+                    try { localStorage.setItem('olx_cached_ads', JSON.stringify(cacheArray)); } catch(e){}
+                } catch (e) { console.log(e); }
+            }
+        }
+
+        function createCardFromDataObj(data, container, isMyAd) {
+            const dataStr = encodeURIComponent(JSON.stringify(data));
+            const priceStr = Number(data.price).toLocaleString('en-IN');
+            const clickAttr = `onclick="handleCardClick('${dataStr}')"`;
+            const dateStr = data.createdAt ? timeAgo(data.createdAt.seconds ? new Date(data.createdAt.seconds * 1000) : data.createdAt) : 'Just now';
+            
+            // --- DISCOUNT CALCULATION ---
+            let discountHtml = '';
+            let discountClass = '';
+            if (data.mrp && Number(data.mrp) > Number(data.price)) {
+                const diff = Number(data.mrp) - Number(data.price);
+                const percent = Math.round((diff / Number(data.mrp)) * 100);
+                if (percent > 0) {
+                    discountHtml = `<div class="discount-badge">${percent}% OFF</div>`;
+                    discountClass = 'has-discount';
+                }
+            }
+
+            // Featured replaces Fresh if active, but Discount takes priority visually or sits on top
+            const featuredTag = data.featured ? `<div class="featured-tag"><i class="fas fa-bolt"></i> Featured</div>` : (!isMyAd ? '<div class="new-tag">FRESH</div>' : '');
+            
+            let actionButtons = '';
+            if(isMyAd) {
+                actionButtons = `
+                <div class="my-ad-actions" onclick="event.stopPropagation()">
+                    <div class="my-ad-btn btn-boost" onclick="openBoostModal('${data.id}')"><i class="fas fa-rocket"></i> Boost</div>
+                    <div class="my-ad-btn btn-edit" onclick="editAd('${data.id}', this)">EDIT</div>
+                    <div class="my-ad-btn btn-delete" onclick="deleteAd('${data.id}')">DEL</div>
+                </div>`;
+            }
+            const html = `
+                <div class="card ${discountClass}">
+                    <div ${clickAttr}>
+                        ${discountHtml}
+                        ${featuredTag}
+                        <div class="card-img-container"><img src="${data.images[0]}" alt="${data.title}"></div>
+                        <div class="card-details">
+                            <div class="price">₹ ${priceStr}</div>
+                            <div class="title">${data.title}</div>
+                            <div class="meta"><span class="loc">${data.location || (userProfile.state || "Meghalaya")}</span><span class="date">${dateStr}</span></div>
+                        </div>
+                    </div>
+                    ${actionButtons}
+                </div>
+            `;
+            container.insertAdjacentHTML('beforeend', html);
+        }
+
+        window.handleCardClick = (dataStr) => {
+            const data = JSON.parse(decodeURIComponent(dataStr));
+            loadProductDetails(data);
+        };
+
+        window.openCategory = async (catName) => {
+            trackInterest(catName);
+            const screen = document.getElementById('screen-category');
+            document.getElementById('cat-screen-title').innerText = catName;
+            const grid = document.getElementById('cat-grid');
+            grid.innerHTML = '<div style="padding:20px;text-align:center">Loading...</div>';
+            changeScreen('category', null);
+            try {
+                const q = query(collection(db, "ads"), where("category", "==", catName));
+                const querySnapshot = await getDocs(q);
+                grid.innerHTML = '';
+                if (querySnapshot.empty) { grid.innerHTML = '<div style="padding:20px; text-align:center; grid-column:span 2;">No ads in this category yet.</div>'; return; }
+                let docs = []; querySnapshot.forEach((doc) => docs.push({id: doc.id, ...doc.data()}));
+                docs.sort((a, b) => (b.createdAt?.seconds||0) - (a.createdAt?.seconds||0));
+                docs.forEach((ad) => createCardFromDataObj(ad, grid, false));
+            } catch (e) { grid.innerHTML = 'Error loading category.'; }
+        };
+
+        window.openMyAds = async () => {
+            changeScreen('my-ads', document.getElementById('nav-profile'));
+            const grid = document.getElementById('my-ads-grid');
+            grid.innerHTML = '<div style="padding:20px;text-align:center">Loading your ads...</div>';
+            try {
+                const q = query(collection(db, "ads"), where("sellerId", "==", currentUser.uid));
+                const querySnapshot = await getDocs(q);
+                grid.innerHTML = '';
+                if (querySnapshot.empty) { grid.innerHTML = `<div class="placeholder-screen" style="height:40vh; grid-column: span 2;"><i class="fas fa-camera"></i><h3>No Ads yet</h3><p>Start selling today!</p></div>`; return; }
+                let docs = []; querySnapshot.forEach((doc) => docs.push({id:doc.id, ...doc.data()}));
+                docs.sort((a, b) => (b.createdAt?.seconds||0) - (a.createdAt?.seconds||0));
+                docs.forEach((ad) => createCardFromDataObj(ad, grid, true));
+            } catch (e) { console.error(e); }
+        };
+
+        window.deleteAd = (id) => {
+            showConfirm("Delete Ad?", "Are you sure?", async () => {
+                try { await deleteDoc(doc(db, "ads", id)); openMyAds(); } catch(e) { showAlert("Error", e.message); }
+            });
+        };
+        
+        window.editAd = (id, btnEl) => {
+            setLoading(true, "Loading...", 'postAdBtn');
+            getDoc(doc(db, "ads", id)).then(docSnap => {
+                const data = docSnap.data();
+                editingAdId = id; selectedFiles = data.images;
+                document.getElementById('adCategory').value = data.category; 
+                document.getElementById('adTitle').value = data.title;
+                document.getElementById('adPrice').value = data.price; 
+                // Populate MRP if exists
+                document.getElementById('adMRP').value = data.mrp || "";
+                document.getElementById('adDesc').value = data.description;
+                renderPreviews();
+                document.getElementById('sell-header').innerText = "Edit Ad"; 
+                document.getElementById('postAdBtn').style.display = 'none'; 
+                document.getElementById('updateAdBtn').style.display = 'block';
+                handleCategoryChange().then(() => {
+                    if(data.customDetails && dynamicFieldsData.length > 0) {
+                         dynamicFieldsData.forEach(field => {
+                            if(data.customDetails[field.label]) {
+                                const el = document.getElementById(`field_${field.id}`);
+                                if(el) el.value = data.customDetails[field.label];
+                            }
+                         });
+                    }
+                });
+                changeScreen('sell', document.querySelector('.sell-btn-wrapper'));
+                setLoading(false, "Post Now", 'postAdBtn');
+            });
+        };
+
+        window.openEditProfile = () => {
+            document.getElementById('editName').value = userProfile.name;
+            document.getElementById('editPhone').value = userProfile.phone;
+            document.getElementById('editLocation').value = userProfile.location;
+            document.getElementById('editState').value = userProfile.state; // Populate state
+            document.getElementById('editPincode').value = userProfile.pincode;
+            document.getElementById('preview-profile-pic').src = userProfile.pic;
+            changeScreen('edit-profile', null);
+        };
+        window.handleProfilePicSelect = async (event) => {
+            const file = event.target.files[0];
+            if (file) { document.getElementById('preview-profile-pic').src = await compressImage(file, 30000); }
+        };
+        
+        window.saveProfile = async () => {
+            const newName = document.getElementById('editName').value;
+            const newPhone = document.getElementById('editPhone').value;
+            const newLoc = document.getElementById('editLocation').value;
+            const newState = document.getElementById('editState').value;
+            const newPin = document.getElementById('editPincode').value; 
+            const newPic = document.getElementById('preview-profile-pic').src;
+            const btn = document.querySelector('#screen-edit-profile .btn-submit'); btn.innerText = "Saving..."; btn.disabled = true;
+            try {
+                await setDoc(doc(db, "users", currentUser.uid), { 
+                    name: newName, phone: newPhone, location: newLoc, state: newState, pincode: newPin, pic: newPic, email: currentUser.email 
+                }, { merge: true });
+                
+                userProfile = { ...userProfile, name: newName, phone: newPhone, location: newLoc, state: newState, pincode: newPin, pic: newPic };
+                updateProfileUI(); 
+                changeScreen('profile', document.getElementById('nav-profile'));
+            } catch(e) { showAlert("Error", e.message); } finally { btn.innerText = "Save Changes"; btn.disabled = false; }
+        };
+
+        // --- 4. PHONE MASKING & DETAILS ---
+        const maskPhone = (phone) => {
+            if(!phone || phone.length < 5) return "******";
+            return phone.substring(0, 4) + "*****";
+        };
+
+        let currentAdDetails = {};
+        window.loadProductDetails = (data) => {
+            currentAdDetails = data;
+            // Render Price and Discount
+            let priceHtml = `₹ ${Number(data.price).toLocaleString('en-IN')}`;
+            if(data.mrp && Number(data.mrp) > Number(data.price)) {
+                priceHtml += `<span class="original-price">₹ ${Number(data.mrp).toLocaleString('en-IN')}</span>`;
+            }
+            document.getElementById('dt-price').innerHTML = priceHtml;
+
+            document.getElementById('dt-title').innerText = data.title;
+            document.getElementById('dt-location').innerHTML = `<i class="fas fa-map-marker-alt"></i> ${data.location || (userProfile.state || "Meghalaya")}`;
+            const dateStr = data.createdAt ? timeAgo(data.createdAt.seconds ? new Date(data.createdAt.seconds * 1000) : data.createdAt) : 'Just now';
+            document.getElementById('dt-date').innerText = dateStr;
+            
+            document.getElementById('dt-desc').innerText = data.description;
+            document.getElementById('dt-seller-name').innerText = data.sellerName || "User";
+            document.getElementById('dt-seller-loc').innerText = data.location;
+            
+            // Toggle Wishlist Icon State
+            const wishBtn = document.getElementById('dt-wishlist-btn');
+            if(userWishlist.includes(data.id)) {
+                wishBtn.classList.remove('far'); wishBtn.classList.add('fas'); wishBtn.style.color = "#ff3a3a";
+            } else {
+                wishBtn.classList.remove('fas'); wishBtn.classList.add('far'); wishBtn.style.color = "white";
+            }
+
+            // Masked Phone Display
+            const phoneEl = document.getElementById('dt-seller-phone');
+            if(data.sellerPhone) {
+                phoneEl.innerText = maskPhone(data.sellerPhone);
+            } else {
+                phoneEl.innerText = "No Phone";
+            }
+            
+            const featContainer = document.getElementById('dt-features');
+            featContainer.innerHTML = '';
+            if(data.customDetails) {
+                for (const [key, value] of Object.entries(data.customDetails)) {
+                    featContainer.innerHTML += `<span class="feature-chip">${key}: ${value}</span>`;
+                }
+            }
+            document.getElementById('dt-seller-box').onclick = () => openSellerProfile(data.sellerId, data.sellerName, data.sellerPic, data.location);
+            const offerBtn = document.getElementById('dt-offer-btn'); offerBtn.innerText = "Call Seller";
+            
+            // Unmask Logic on Click
+            offerBtn.onclick = () => { 
+                if(data.sellerPhone) { 
+                    document.getElementById('dt-seller-phone').innerText = data.sellerPhone;
+                    window.location.href = `tel:${data.sellerPhone}`; 
+                } else { showAlert("Alert", "Phone number not available"); } 
+            };
+            
+            const sPic = data.sellerPic;
+            document.getElementById('dt-seller-img').src = sPic && sPic !== 'undefined' ? sPic : "https://cdn-icons-png.flaticon.com/512/3135/3135715.png";
+            const slider = document.getElementById('dt-slider'); slider.innerHTML = '';
+            if(data.images && data.images.length > 0) {
+                data.images.forEach(img => slider.innerHTML += `<div class="slider-item"><img src="${img}"></div>`);
+                document.getElementById('dt-counter').innerText = `1/${data.images.length}`;
+            } else { slider.innerHTML = `<div class="slider-item">No Images</div>`; }
+            slider.onscroll = () => document.getElementById('dt-counter').innerText = `${Math.round(slider.scrollLeft/slider.offsetWidth)+1}/${Math.max(1, data.images.length)}`;
+            if(currentUser && currentUser.uid === data.sellerId) { document.getElementById('dt-chat-btn').style.display = 'none'; } 
+            else { document.getElementById('dt-chat-btn').style.display = 'block'; }
+            changeScreen('details', null);
+        };
+
+        window.openSellerProfile = async (sellerId, name, pic, loc) => {
+            document.getElementById('seller-screen-name').innerText = name;
+            document.getElementById('seller-screen-loc').innerText = loc;
+            document.getElementById('seller-screen-pic').src = pic && pic !== 'undefined' ? pic : "https://cdn-icons-png.flaticon.com/512/3135/3135715.png";
+            const grid = document.getElementById('seller-ads-grid');
+            grid.innerHTML = '<div style="padding:20px;text-align:center">Loading ads...</div>';
+            changeScreen('seller-profile', null);
+            try {
+                const q = query(collection(db, "ads"), where("sellerId", "==", sellerId));
+                const querySnapshot = await getDocs(q);
+                grid.innerHTML = '';
+                if(querySnapshot.empty) { grid.innerHTML = '<div style="padding:20px; text-align:center; grid-column:span 2;">No active ads.</div>'; return; }
+                let docs = []; querySnapshot.forEach((doc) => docs.push({id: doc.id, ...doc.data()}));
+                docs.sort((a,b) => (b.createdAt?.seconds||0) - (a.createdAt?.seconds||0));
+                docs.forEach(ad => createCardFromDataObj(ad, grid, false));
+            } catch(e) { grid.innerHTML = 'Error loading seller ads.'; }
+        };
+
+        // --- WISHLIST LOGIC ---
+        window.toggleWishlistDetails = async () => {
+            if (!currentUser) return showAlert("Login Required", "Log in to save items.");
+            const adId = currentAdDetails.id;
+            const btn = document.getElementById('dt-wishlist-btn');
+            
+            if (userWishlist.includes(adId)) {
+                // Remove
+                userWishlist = userWishlist.filter(id => id !== adId);
+                btn.classList.remove('fas'); btn.classList.add('far'); btn.style.color = "white";
+                showAlert("Removed", "Removed from wishlist");
+            } else {
+                // Add
+                userWishlist.push(adId);
+                btn.classList.remove('far'); btn.classList.add('fas'); btn.style.color = "#ff3a3a";
+                showAlert("Saved", "Added to wishlist");
+            }
+            
+            // Sync to Firestore
+            try {
+                const userRef = doc(db, "users", currentUser.uid);
+                await updateDoc(userRef, { wishlist: userWishlist });
+                localStorage.setItem('olx_wishlist_ids', JSON.stringify(userWishlist));
+            } catch (e) { console.error("Wishlist sync error", e); }
+        };
+
+        window.openWishlistScreen = async () => {
+            changeScreen('wishlist', null);
+            const grid = document.getElementById('wishlist-grid');
+            grid.innerHTML = '<div style="padding:20px;text-align:center">Loading saved items...</div>';
+            
+            if(userWishlist.length === 0) {
+                 grid.innerHTML = `<div class="placeholder-screen"><i class="far fa-heart"></i><h3>Empty Wishlist</h3><p>Save items you like!</p></div>`;
+                 return;
+            }
+            
+            try {
+                // Fetch ads based on IDs in userWishlist
+                // Note: Firestore 'in' query supports max 10 items. For simplicity in this demo, we fetch individually if array is small, or loop.
+                // Or better: filter from cached ads if available.
+                const cachedAds = JSON.parse(localStorage.getItem('olx_cached_ads') || '[]');
+                const wishAds = cachedAds.filter(ad => userWishlist.includes(ad.id));
+                
+                grid.innerHTML = '';
+                if(wishAds.length === 0) {
+                     // Fallback fetch if not in cache (simplified)
+                     grid.innerHTML = '<div style="padding:20px;text-align:center">Items might be loaded on home screen first.</div>';
+                } else {
+                    wishAds.forEach(ad => createCardFromDataObj(ad, grid, false));
+                }
+            } catch (e) { grid.innerHTML = "Error loading wishlist"; }
+        };
+
+        // --- SHARE LOGIC WITH IMAGE CONVERSION ---
+        function base64ToFile(dataurl, filename) {
+            try {
+                let arr = dataurl.split(','), mime = arr[0].match(/:(.*?);/)[1],
+                    bstr = atob(arr[1]), n = bstr.length, u8arr = new Uint8Array(n);
+                while(n--){
+                    u8arr[n] = bstr.charCodeAt(n);
+                }
+                return new File([u8arr], filename, {type:mime});
+            } catch(e) { return null; }
+        }
+
+        window.handleShare = async () => {
+            const data = currentAdDetails;
+            if(!data) return;
+
+            const shareData = {
+                title: data.title,
+                text: `Check out this ${data.title} for ₹${data.price} on Bading Chiwalani!\n`,
+                url: window.location.href // Ideally specific ad ID URL logic
+            };
+
+            const btn = document.querySelector('.fa-share-alt'); // Feedback visual
+            if(btn) btn.className = 'fas fa-spinner fa-spin'; // Loading state
+
+            try {
+                let file = null;
+                const imgUrl = data.images && data.images.length > 0 ? data.images[0] : null;
+
+                if(imgUrl) {
+                    if(imgUrl.startsWith('data:')) {
+                        file = base64ToFile(imgUrl, 'ad_image.png');
+                    } else {
+                        // If it's a remote URL
+                        try {
+                            const response = await fetch(imgUrl);
+                            const blob = await response.blob();
+                            file = new File([blob], 'ad_image.png', { type: blob.type });
+                        } catch(e) { console.log("Fetch image failed"); }
+                    }
+                }
+
+                if (file && navigator.canShare && navigator.canShare({ files: [file] })) {
+                    shareData.files = [file];
+                }
+
+                await navigator.share(shareData);
+            } catch (err) {
+                console.log('Share failed or canceled', err);
+                // Fallback: Copy to clipboard if share sheet fails (not due to user cancellation)
+                if (err.name !== 'AbortError') {
+                    try {
+                        await navigator.clipboard.writeText(`${shareData.title}\n${shareData.text}\n${shareData.url}`);
+                        showAlert("Link Copied", "Sharing failed, but link copied to clipboard.");
+                    } catch (cErr) {
+                        showAlert("Share Error", "Could not share this ad.");
+                    }
+                }
+            } finally {
+                if(btn) btn.className = 'fas fa-share-alt'; // Restore icon
+            }
+        };
+
+        // ================= CHAT LOGIC =================
+        let currentChatId = null; let unsubscribeMessages = null; let activeChatParticipants = [];
+        function startChatListener() {
+            if(!currentUser) return;
+            const q = query(collection(db, "chats"), where("participants", "array-contains", currentUser.uid));
+            onSnapshot(q, (snapshot) => {
+                let totalUnread = 0;
+                snapshot.forEach(doc => { const data = doc.data(); const myUnread = data[`unread_${currentUser.uid}`] || 0; totalUnread += myUnread; });
+                const badge = document.getElementById('chat-badge');
+                if(totalUnread > 0) { badge.innerText = totalUnread; badge.style.display = 'block'; } 
+                else { badge.style.display = 'none'; }
+            });
+        }
+        window.startChatFromDetails = async () => {
+            if(!currentUser) { showAlert("Login Required", "Please login to chat"); return; }
+            const sellerId = currentAdDetails.sellerId;
+            if(sellerId === currentUser.uid) { showAlert("Alert", "You cannot chat with yourself"); return; }
+            const q = query(collection(db, "chats"), where("participants", "array-contains", currentUser.uid));
+            const snapshot = await getDocs(q);
+            let existingChatId = null;
+            snapshot.forEach(doc => { const data = doc.data(); if(data.participants.includes(sellerId) && data.adId === currentAdDetails.id) { existingChatId = doc.id; } });
+            if(existingChatId) { openConversation(existingChatId, currentAdDetails.sellerName, currentAdDetails.title); } 
+            else {
+                const names = {}; names[currentUser.uid] = userProfile.name; names[sellerId] = currentAdDetails.sellerName;
+                try {
+                    const newChat = await addDoc(collection(db, "chats"), {
+                        participants: [currentUser.uid, sellerId], adId: currentAdDetails.id, adTitle: currentAdDetails.title,
+                        adImage: currentAdDetails.images[0] || "", lastMessage: "", lastMessageTime: serverTimestamp(), lastSenderId: "",
+                        participantNames: names, [`unread_${currentUser.uid}`]: 0, [`unread_${sellerId}`]: 0
+                    });
+                    openConversation(newChat.id, currentAdDetails.sellerName, currentAdDetails.title);
+                } catch(e) { showAlert("Error", "Error starting chat: " + e.message); }
+            }
+        };
+        window.openConversation = async (chatId, name, adTitle) => {
+            currentChatId = chatId; document.getElementById('chat-header-name').innerText = "Loading...";
+            try {
+                const chatDoc = await getDoc(doc(db, "chats", chatId));
+                if(chatDoc.exists()) {
+                    activeChatParticipants = chatDoc.data().participants;
+                    const otherUserId = activeChatParticipants.find(id => id !== currentUser.uid);
+                    if(otherUserId) {
+                        const userSnap = await getDoc(doc(db, "users", otherUserId));
+                        if(userSnap.exists()) { document.getElementById('chat-header-name').innerText = userSnap.data().name; } 
+                        else { document.getElementById('chat-header-name').innerText = name || "User"; }
+                    } else { document.getElementById('chat-header-name').innerText = name || "User"; }
+                    await updateDoc(doc(db, "chats", chatId), { [`unread_${currentUser.uid}`]: 0 });
+                }
+            } catch(e) { console.error(e); }
+            document.getElementById('chat-header-ad').innerText = adTitle;
+            changeScreen('chat-conversation', null); 
+            const msgsRef = collection(db, "chats", chatId, "messages");
+            const q = query(msgsRef, orderBy("timestamp", "asc"));
+            if(unsubscribeMessages) unsubscribeMessages();
+            const container = document.getElementById('chat-messages-container');
+            container.innerHTML = '<div style="text-align:center; padding:20px; color:#ccc;">Loading...</div>';
+            unsubscribeMessages = onSnapshot(q, (snapshot) => {
+                container.innerHTML = '';
+                if(snapshot.empty) { container.innerHTML = '<div style="text-align:center; padding:20px; color:#ccc;">Say Hello!</div>'; }
+                snapshot.forEach(doc => {
+                    const data = doc.data(); const isMine = data.senderId === currentUser.uid;
+                    const date = data.timestamp ? new Date(data.timestamp.seconds * 1000) : new Date();
+                    const timeStr = date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                    const div = document.createElement('div');
+                    div.className = `message-bubble ${isMine ? 'sent' : 'received'}`;
+                    div.innerHTML = `${data.text}<span class="msg-time">${timeStr}</span>`;
+                    container.appendChild(div);
+                });
+                container.scrollTop = container.scrollHeight;
+            });
+        };
+        window.sendMessage = async () => {
+            const input = document.getElementById('chat-input-field'); const text = input.value.trim();
+            if(!text || !currentChatId) return; input.value = '';
+            try {
+                const otherUserId = activeChatParticipants.find(id => id !== currentUser.uid);
+                await addDoc(collection(db, "chats", currentChatId, "messages"), { text: text, senderId: currentUser.uid, timestamp: serverTimestamp() });
+                const updateData = { lastMessage: text, lastMessageTime: serverTimestamp(), lastSenderId: currentUser.uid };
+                if(otherUserId) { updateData[`unread_${otherUserId}`] = increment(1); }
+                await updateDoc(doc(db, "chats", currentChatId), updateData);
+            } catch(e) { console.error("Msg error:", e); }
+        };
+        window.loadChatInbox = () => {
+            if(!currentUser) { document.getElementById('chat-inbox-list').innerHTML = '<div class="placeholder-screen">Please log in to see chats</div>'; return; }
+            const q = query(collection(db, "chats"), where("participants", "array-contains", currentUser.uid));
+            onSnapshot(q, (snapshot) => {
+                let chats = []; snapshot.forEach(doc => { chats.push({id: doc.id, ...doc.data()}); });
+                renderChatList(chats);
+            });
+        };
+        function renderChatList(chats) {
+            const list = document.getElementById('chat-inbox-list'); list.innerHTML = '';
+            if(chats.length === 0) { list.innerHTML = `<div class="placeholder-screen"><i class="far fa-comments"></i><h3>No messages yet</h3><p>Start a conversation from an ad!</p></div>`; return; }
+            chats.sort((a, b) => (b.lastMessageTime?.seconds||0) - (a.lastMessageTime?.seconds||0));
+            chats.forEach(data => {
+                const otherUserId = data.participants.find(id => id !== currentUser.uid);
+                const otherUserName = (data.participantNames && data.participantNames[otherUserId]) ? data.participantNames[otherUserId] : "User";
+                const adImg = data.adImage || "https://cdn-icons-png.flaticon.com/512/3135/3135715.png";
+                let timeDisplay = ""; if(data.lastMessageTime) { const d = new Date(data.lastMessageTime.seconds * 1000); timeDisplay = d.toLocaleDateString(); }
+                const unreadCount = data[`unread_${currentUser.uid}`] || 0;
+                const unreadClass = unreadCount > 0 ? 'unread' : '';
+                const badgeHtml = unreadCount > 0 ? `<div class="chat-list-badge">${unreadCount}</div>` : '';
+                const div = document.createElement('div');
+                div.className = `chat-item ${unreadClass}`;
+                div.onclick = () => openConversation(data.id, otherUserName, data.adTitle);
+                div.innerHTML = `<img src="${adImg}" class="chat-item-img"><div class="chat-item-info"><div class="chat-item-name">${otherUserName} <span class="chat-time">${timeDisplay}</span></div><div class="chat-item-ad">${data.adTitle}</div><div class="chat-item-msg">${data.lastMessage || "No messages yet"}</div></div>${badgeHtml}`;
+                list.appendChild(div);
+            });
+        }
+    </script>
+<script>
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('sw.js')
+                .then((reg) => console.log('Service Worker Registered!', reg.scope))
+                .catch((err) => console.log('Service Worker Registration Failed:', err));
+        });
+    }
+</script>
+</body>
+</html>
