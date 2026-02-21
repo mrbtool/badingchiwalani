@@ -2,7 +2,7 @@ const fs = require('fs');
 
 // 1. CONFIGURATION
 // Replace this with your actual domain where the app is hosted
-const BASE_URL = 'https://badingchiwalani.com'; // Example domain
+const BASE_URL = 'https://badingchiwalani.pages.dev/'; // Example domain
 const OUTPUT_FILE = 'sitemap.xml';
 
 // 2. DEFINE YOUR STATIC SCREENS
