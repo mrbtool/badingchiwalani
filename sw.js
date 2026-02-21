@@ -1,4 +1,4 @@
-const CACHE_NAME = 'bading-chiwalani-v1';
+const CACHE_NAME = 'bading-chiwalani-v2';
 const ASSETS_TO_CACHE = [
     './', 
     './index.html', // Assumes your main file is named index.html
